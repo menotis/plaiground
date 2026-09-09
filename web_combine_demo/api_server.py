@@ -75,8 +75,10 @@ def _build_markdown(d: dict) -> str:
         "",
         "## 에러 · 문제 해결",
         "",
-        f"- 에러: {ts['error_type']}",
-        f"- 근본 원인: {ts['root_cause']}",
+        *[line for i, e in enumerate(ts.get("errors") or [], start=1)
+          for line in (f"### #{i} {e['error_type']}", f"- 원인: {e['cause']}", f"- 해결: {e['fix']}", "")],
+        f"- 최종 에러: {ts['error_type']}",
+        f"- 원인 요약: {ts['root_cause']}",
         "",
         "```diff",
         ts["resolution_diff"],
@@ -88,23 +90,64 @@ def _build_markdown(d: dict) -> str:
     return "\n".join(lines)
 
 
-def _telemetry_summary() -> dict:
+_RUNS_DIR = _PORTFOLIO_DIR / ".telemetry" / "runs"
+_OUTPUT_DIR = _PORTFOLIO_DIR / "output"
+
+
+def _telemetry_path(run: str) -> Path:
+    return (_RUNS_DIR / f"{run}.json") if run else (_PORTFOLIO_DIR / ".telemetry" / "raw_telemetry.json")
+
+
+def _output_path(run: str, ext: str) -> Path:
+    return (_OUTPUT_DIR / f"{run}.{ext}") if run else (_PORTFOLIO_DIR / f"portfolio_output.{ext}")
+
+
+def _list_runs() -> list[dict]:
+    """실행 이력 — 최신순. 모델별 포트폴리오를 따로 고르기 위한 목록."""
+    if not _RUNS_DIR.exists():
+        return []
+    runs = []
+    for f in _RUNS_DIR.glob("*.json"):
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        rid = d.get("run_id") or f.stem
+        runs.append({
+            "run_id": rid,
+            "saved_at": d.get("saved_at", ""),
+            "script": d.get("script", ""),
+            "project_name": (d.get("overview") or {}).get("project_name", ""),
+            "base_model": ((d.get("benchmarks") or {}).get("hyperparameters") or {}).get("base_model", ""),
+            "error_count": len(d.get("error_history") or []),
+            "has_portfolio": (_OUTPUT_DIR / f"{rid}.json").exists(),
+        })
+    return sorted(runs, key=lambda r: r["saved_at"], reverse=True)
+
+
+def _telemetry_summary(run: str = "") -> dict:
     """포트폴리오 화면 상단 지표용 — 원본 JSON에서 가벼운 필드만 추린다."""
-    path = _PORTFOLIO_DIR / ".telemetry" / "raw_telemetry.json"
+    path = _telemetry_path(run)
     if not path.exists():
-        return {"exists": False}
+        return {"exists": False, "run_id": run}
     data = json.loads(path.read_text(encoding="utf-8"))
     return {
         "exists": True,
+        "run_id": data.get("run_id", run),
         "saved_at": data.get("saved_at", ""),
         "overview": data.get("overview", {}),
         "dataset": data.get("dataset", {}),
         "benchmarks": data.get("benchmarks", {}),
         "error_count": len(data.get("error_history", [])),
+        "script_diff": data.get("script_diff", ""),  # 실패 스냅샷 vs 성공본 실제 diff
         "last_error_type": (data.get("last_error") or {}).get("error_type", ""),
-        "output_exists": (_PORTFOLIO_DIR / "portfolio_output.html").exists(),
-        "data_exists": (_PORTFOLIO_DIR / "portfolio_output.json").exists(),
+        "output_exists": _output_path(run, "html").exists(),
+        "data_exists": _output_path(run, "json").exists(),
     }
+
+
+def _run_of(route) -> str:
+    return parse_qs(route.query).get("run", [""])[0]
 
 
 class _Handler(_BaseHandler):
@@ -117,18 +160,21 @@ class _Handler(_BaseHandler):
                 self._send_json(community.list_comments(parse_qs(route.query).get("post_id", [""])[0]))
             except KeyError as exc:
                 self._send_json({"error": str(exc)}, status=404)
+        elif route.path == "/api/portfolio/runs":
+            self._send_json(_list_runs())
         elif route.path == "/api/portfolio/run":
-            self._stream_portfolio_run()
+            qs = parse_qs(route.query)
+            self._stream_portfolio_run(qs.get("mode", [""])[0], qs.get("run", [""])[0])
         elif route.path == "/api/ide/status":
             self._send_json({"running": _ide_running(), "ide_url": _IDE_URL})
         elif route.path == "/api/portfolio/export.md":
-            self._send_portfolio_md()
+            self._send_portfolio_md(_run_of(route))
         elif route.path == "/api/portfolio/data":
-            self._send_portfolio_data()
+            self._send_portfolio_data(_run_of(route))
         elif route.path == "/api/portfolio/output":
-            self._send_portfolio_html()
+            self._send_portfolio_html(_run_of(route))
         elif route.path == "/api/portfolio/telemetry":
-            self._send_json(_telemetry_summary())
+            self._send_json(_telemetry_summary(_run_of(route)))
         elif route.path.startswith("/api/"):
             super().do_GET()
         elif not _STATIC_DIR.exists():
@@ -158,29 +204,29 @@ class _Handler(_BaseHandler):
         except (KeyError, ValueError) as exc:
             self._send_json({"error": str(exc)}, status=400)
 
-    def _send_portfolio_md(self) -> None:
-        path = _PORTFOLIO_DIR / "portfolio_output.json"
+    def _send_portfolio_md(self, run: str = "") -> None:
+        path = _output_path(run, "json")
         if not path.exists():
             self._send_json({"error": "포트폴리오가 아직 생성되지 않았습니다."}, status=404)
             return
         body = _build_markdown(json.loads(path.read_text(encoding="utf-8"))).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/markdown; charset=utf-8")
-        self.send_header("Content-Disposition", 'attachment; filename="plaiground_portfolio.md"')
+        self.send_header("Content-Disposition", f'attachment; filename="plaiground_portfolio{"_" + run if run else ""}.md"')
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
-    def _send_portfolio_data(self) -> None:
+    def _send_portfolio_data(self, run: str = "") -> None:
         """렌더러가 저장한 포트폴리오 스키마 JSON — 프론트엔드 네이티브 렌더링용."""
-        path = _PORTFOLIO_DIR / "portfolio_output.json"
+        path = _output_path(run, "json")
         if not path.exists():
             self._send_json({"error": "포트폴리오가 아직 생성되지 않았습니다. 먼저 파이프라인을 실행하세요."}, status=404)
             return
         self._send_json(json.loads(path.read_text(encoding="utf-8")))
 
-    def _send_portfolio_html(self) -> None:
-        path = _PORTFOLIO_DIR / "portfolio_output.html"
+    def _send_portfolio_html(self, run: str = "") -> None:
+        path = _output_path(run, "html")
         if not path.exists():
             self._send_json({"error": "포트폴리오가 아직 생성되지 않았습니다. 먼저 파이프라인을 실행하세요."}, status=404)
             return
@@ -191,20 +237,29 @@ class _Handler(_BaseHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _stream_portfolio_run(self) -> None:
-        """run_demo.py를 서브프로세스로 돌리고 stdout을 그대로 SSE로 흘린다.
+    def _stream_portfolio_run(self, mode: str = "", run: str = "") -> None:
+        """포트폴리오 파이프라인을 서브프로세스로 돌리고 stdout을 SSE로 흘린다.
 
-        run_demo는 sys.excepthook을 갈아끼우므로 서버 프로세스 안에서 직접
-        임포트하지 않는다 — 격리가 곧 안정성이다.
+        - 기본: Web IDE 학습이 남긴 실제 텔레메트리(raw_telemetry.json)로 생성
+          (generate_real_portfolio). 텔레메트리가 없으면 데모 파이프라인으로 폴백.
+        - mode=demo: 강제로 run_demo (가상 OOM + 데모 수치로 텔레메트리를 덮어쓴다).
+        서브프로세스로 격리하는 이유: run_demo가 sys.excepthook을 갈아끼우기 때문.
         """
+        has_real = _telemetry_path(run).exists()
+        use_demo = mode == "demo" or not has_real
+        module = "portfolio_demo.run_demo" if use_demo else "portfolio_demo.generate_real_portfolio"
+        extra = [] if use_demo or not run else ["--run", run]
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()
 
-        env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+        # 파이프로 연결된 파이썬은 stdout을 블록 버퍼링해 종료 때까지 한 줄도 안 보낸다.
+        # 재시도 대기(최대 50초)까지 겹치면 화면이 멈춘 것처럼 보이므로 무버퍼로 강제한다.
+        env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"}
+        self._sse("log", f"[source] {'데모 파이프라인 (가상 데이터)' if use_demo else '실제 학습 텔레메트리 (' + _telemetry_path(run).name + ')'}")
         proc = subprocess.Popen(
-            [sys.executable, "-m", "portfolio_demo.run_demo"],
+            [sys.executable, "-m", module, *extra],
             cwd=_REPO_ROOT,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -215,12 +270,17 @@ class _Handler(_BaseHandler):
         )
         try:
             for line in proc.stdout:
+                if "automatic function calling" in line:  # Gemini SDK 경고 — 사용자에게 의미 없음
+                    continue
                 self._sse("log", line.rstrip())
             code = proc.wait()
             if code == 0:
-                self._sse("ready", {"output_url": "/api/portfolio/output", "telemetry": _telemetry_summary()})
+                # 데모는 새 run_id를 만드므로 최신 run을 되돌려 준다
+                rid = run if (run and not use_demo) else ((_list_runs() or [{}])[0].get("run_id", "") if use_demo else "")
+                self._sse("ready", {"output_url": "/api/portfolio/output", "run_id": rid, "telemetry": _telemetry_summary(rid)})
             else:
-                self._sse("error", f"파이프라인이 종료 코드 {code}로 실패했습니다. 서버 로그를 확인하세요.")
+                self._sse("error", "LLM 호출이 실패해 생성을 중단했습니다 — 위 로그의 마지막 줄에 이유(과부하/할당량)가 있습니다." if code == 2
+                          else f"파이프라인이 종료 코드 {code}로 실패했습니다. 서버 로그를 확인하세요.")
         except (BrokenPipeError, ConnectionAbortedError):
             proc.kill()  # 브라우저가 탭을 닫음
 

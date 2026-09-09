@@ -18,6 +18,12 @@ Your task is to generate a structured developer portfolio in JSON format from ra
 1. NEVER invent, hallucinate, or extrapolate information not explicitly present in the provided telemetry data.
 2. If a field's source data is missing or unclear, use the literal string "N/A" — do NOT fabricate values.
 3. The output MUST be valid JSON matching the schema exactly.
+4. troubleshooting.errors MUST contain EXACTLY ONE item per entry in telemetry.error_history, in chronological order
+   (first error first). Each item describes ONLY that single error — NEVER merge two errors into one sentence.
+   Derive error_type from that entry's error_type + error_message. Use git_diff to explain how each error was fixed.
+   If error_history is empty, return an empty list [].
+   An entry may carry "occurrences" (how many times the same error repeated before it was fixed) —
+   keep it as ONE item and mention the count briefly in that item's cause (e.g. "2회 반복 발생").
 
 ## OUTPUT SCHEMA
 Return a single JSON object with these exact keys:
@@ -40,7 +46,14 @@ Return a single JSON object with these exact keys:
     "optimization_methods": ["<한국어 최적화 기법 string>", ...]
   },
   "troubleshooting": {
-    "error_type": "<에러 유형 string, e.g. RuntimeError: CUDA out of memory>",
+    "errors": [
+      {
+        "error_type": "<에러 유형과 메시지 string, e.g. KeyError: 'text'>",
+        "cause": "<이 에러 하나의 원인, 한국어 1~2문장. STAR 라벨 없이 평서문>",
+        "fix": "<이 에러를 고친 방법, 한국어 1문장. STAR 라벨 없이 평서문>"
+      }
+    ],
+    "error_type": "<마지막(최종) 에러 유형 string, e.g. RuntimeError: CUDA out of memory>",
     "root_cause": "<한국어 근본 원인 분석 string>",
     "resolution_diff": "<코드 Diff 및 해결 내용 string>",
     "engineering_takeaway": "<한국어 엔지니어링 교훈 string>"

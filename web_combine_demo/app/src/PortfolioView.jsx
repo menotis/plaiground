@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 
 // ─── Portfolio — 실제 portfolio_demo 파이프라인 실행 + 네이티브 리포트 ────────
-// 실행 버튼은 /api/portfolio/run (SSE)로 run_demo.py를 실제로 돌리고,
+// 실행 버튼은 /api/portfolio/run (SSE)로 선택한 학습 실행의 텔레메트리로 생성 파이프라인을 돌리고,
 // /api/portfolio/data (스키마 JSON)를 받아 하나의 괘선 시트로 렌더링한다.
 // 내보내기: MD는 백엔드가 실제 .md 파일을 내려주고, PDF는 브라우저 인쇄를 쓴다.
 
@@ -42,7 +42,7 @@ function Bullets({ text, accent = 'text-dim' }) {
   return (
     <ul className="space-y-1.5">
       {starBullets(text).map((b, i) => (
-        <li key={i} className="flex items-start gap-2.5 text-[13px] leading-relaxed">
+        <li key={i} className="flex items-start gap-2.5 text-[14px] leading-relaxed">
           {b.label
             ? <span className={`font-mono text-[11px] mt-0.5 w-7 shrink-0 ${accent}`}>{b.label}</span>
             : <span className={`mt-2 w-1 h-1 rounded-full bg-current shrink-0 ${accent}`} />}
@@ -71,7 +71,7 @@ function Report({ data, telemetry }) {
       <header className="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
         <div className="min-w-0">
           <h2 className="font-display font-bold tracking-tight text-2xl leading-snug">{overview.title}</h2>
-          <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5 text-[13px]">
+          <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-5 gap-y-1.5 text-[14px]">
             {[
               ['기반 모델', overview.base_model],
               ['태스크', overview.task_type],
@@ -88,7 +88,7 @@ function Report({ data, telemetry }) {
           </dl>
         </div>
         <div className="lg:border-l lg:border-line lg:pl-8">
-          <p className="flex items-center gap-2 text-[12px] font-medium text-gold">
+          <p className="flex items-center gap-2 text-[13px] font-medium text-gold">
             <ShieldCheck className="w-4 h-4" /> SHA-256 무결성 서명
           </p>
           <p className="mt-2 font-mono text-[11px] leading-5 text-gold/90 break-all">{vf.integrity_hash}</p>
@@ -135,7 +135,7 @@ function Report({ data, telemetry }) {
         <section className="p-6 sm:p-8">
           <SecHead>데이터 전처리</SecHead>
           {ds.raw_len != null && (
-            <p className="mt-4 font-mono text-[13px] text-mist">
+            <p className="mt-4 font-mono text-[14px] text-mist">
               {ds.raw_len.toLocaleString()} <span className="text-dim">→</span>{' '}
               <span className="text-cobalt font-medium">{ds.processed_len?.toLocaleString()}</span> 샘플
               {ds.reduction_rate_pct != null && <span className="text-dim"> · {ds.reduction_rate_pct}% 정제</span>}
@@ -143,7 +143,7 @@ function Report({ data, telemetry }) {
           )}
           <ul className="mt-4 space-y-1.5">
             {de.preprocessing_techniques.map((t) => (
-              <li key={t} className="flex items-start gap-2.5 text-[13px] text-mist leading-relaxed">
+              <li key={t} className="flex items-start gap-2.5 text-[14px] text-mist leading-relaxed">
                 <span className="mt-2 w-1 h-1 rounded-full bg-cobalt shrink-0" />
                 {t}
               </li>
@@ -157,13 +157,13 @@ function Report({ data, telemetry }) {
         <section className="p-6 sm:p-8">
           <SecHead>학습 방법 · 성능 향상</SecHead>
           {Object.keys(hp).length > 0 && (
-            <p className="mt-4 font-mono text-[12px] text-mist leading-6">
+            <p className="mt-4 font-mono text-[13px] text-mist leading-6">
               {Object.entries(hp).map(([k, v]) => `${k}=${v}`).join(' · ')}
             </p>
           )}
           <ul className="mt-4 space-y-1.5">
             {bm.optimization_methods.map((m) => (
-              <li key={m} className="flex items-start gap-2.5 text-[13px] text-mist leading-relaxed">
+              <li key={m} className="flex items-start gap-2.5 text-[14px] text-mist leading-relaxed">
                 <span className="mt-2 w-1 h-1 rounded-full bg-gold shrink-0" />
                 {m}
               </li>
@@ -175,23 +175,48 @@ function Report({ data, telemetry }) {
       {/* 4. 무엇을 극복 — 에러·문제 해결 */}
       <section className="p-6 sm:p-8">
         <SecHead>에러 · 문제 해결</SecHead>
-        <p className="mt-4 font-mono text-[13px] text-ember">{ts.error_type}</p>
-        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-5">
-          <div>
-            <p className="text-[12px] text-dim mb-2">근본 원인</p>
-            <Bullets text={ts.root_cause} accent="text-ember" />
+        {ts.errors?.length ? (
+          /* 에러 하나 = 원인 하나 = 해결 하나 — 발생 순서대로 */
+          <div className="mt-4 divide-y divide-line border-y border-line">
+            {ts.errors.map((e, i) => (
+              <div key={i} className="py-5">
+                {/* 에러명은 전체 폭 — 두 줄로 꺾여도 아래 원인/해결 라벨이 나란히 정렬된다 */}
+                <p className="font-mono text-[14px] text-ember">
+                  <span className="text-dim">#{i + 1}</span> {e.error_type}
+                </p>
+                <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-3">
+                  <div>
+                    <p className="text-[13px] text-dim mb-1.5">원인</p>
+                    <Bullets text={e.cause} accent="text-ember" />
+                  </div>
+                  <div>
+                    <p className="text-[13px] text-dim mb-1.5">해결</p>
+                    <Bullets text={e.fix} accent="text-mint" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div>
-            <p className="text-[12px] text-dim mb-2">해결 Code Diff</p>
-            <div className="rounded-md bg-pit border border-line p-4 font-mono text-[12px] leading-6 overflow-x-auto">
-              {ts.resolution_diff.split('\n').map((line, i) => (
-                <p key={i} className={`px-2 rounded whitespace-pre-wrap ${diffTone(line)}`}>{line}</p>
-              ))}
-            </div>
+        ) : (
+          <>
+            <p className="mt-4 font-mono text-[14px] text-ember">{ts.error_type}</p>
+            <p className="mt-4 text-[13px] text-dim mb-2">원인</p>
+            <Bullets text={ts.root_cause} accent="text-ember" />
+          </>
+        )}
+        <div className="mt-6">
+          <p className="text-[13px] text-dim mb-2">
+            해결 Code Diff
+            {telemetry?.script_diff && <span className="ml-2 font-mono text-[11px] text-mint">실제 수정 이력 (실패 시점 → 성공 시점)</span>}
+          </p>
+          <div className="rounded-md bg-pit border border-line p-4 font-mono text-[13px] leading-6 overflow-x-auto">
+            {(telemetry?.script_diff || ts.resolution_diff).split('\n').map((line, i) => (
+              <p key={i} className={`px-2 rounded whitespace-pre-wrap ${diffTone(line)}`}>{line}</p>
+            ))}
           </div>
         </div>
         <div className="mt-6 pt-5 border-t border-line">
-          <p className="text-[12px] font-medium text-gold mb-2">Engineering Takeaway</p>
+          <p className="text-[13px] font-medium text-gold mb-2">Engineering Takeaway</p>
           <Bullets text={ts.engineering_takeaway} accent="text-gold" />
         </div>
       </section>
@@ -202,44 +227,63 @@ function Report({ data, telemetry }) {
 export default function PortfolioView({ addToast }) {
   const [telemetry, setTelemetry] = useState(null);
   const [report, setReport] = useState(null); // /api/portfolio/data — 스키마 JSON
+  const [runs, setRuns] = useState([]);      // /api/portfolio/runs — 학습 실행 이력 (최신순)
+  const [runId, setRunId] = useState('');    // 선택된 실행 ('' = 최신 raw_telemetry)
   const [phase, setPhase] = useState('idle'); // idle | running | done | error
   const [logs, setLogs] = useState([]);
   const [error, setError] = useState('');
   const logRef = useRef(null);
   const sourceRef = useRef(null);
 
-  const loadAll = useCallback(() => {
-    fetch('/api/portfolio/telemetry')
+  // 선택된 실행의 텔레메트리 요약 + 생성된 리포트
+  const loadRun = useCallback((rid) => {
+    const q = rid ? `?run=${encodeURIComponent(rid)}` : '';
+    fetch(`/api/portfolio/telemetry${q}`)
       .then((r) => r.json())
       .then(setTelemetry)
       .catch(() => setError('API 서버에 연결할 수 없습니다. `python -m web_combine_demo.api_server`를 실행하세요.'));
-    fetch('/api/portfolio/data')
+    fetch(`/api/portfolio/data${q}`)
       .then((r) => (r.ok ? r.json() : null))
       .then(setReport)
       .catch(() => {});
   }, []);
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  // 실행 이력 목록 → 가장 최근 실행을 기본 선택
+  const loadRuns = useCallback((prefer) => {
+    fetch('/api/portfolio/runs')
+      .then((r) => r.json())
+      .then((list) => {
+        setRuns(list);
+        const pick = prefer && list.some((r) => r.run_id === prefer) ? prefer : (list[0]?.run_id ?? '');
+        setRunId(pick);
+        loadRun(pick);
+      })
+      .catch(() => loadRun(''));
+  }, [loadRun]);
+
+  useEffect(() => { loadRuns(); }, [loadRuns]);
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [logs]);
   useEffect(() => () => sourceRef.current?.close(), []);
 
-  const run = useCallback(() => {
+  const run = useCallback((mode = '') => {
     setLogs([]);
     setError('');
     setPhase('running');
 
-    const source = new EventSource('/api/portfolio/run');
+    const params = new URLSearchParams();
+    if (mode) params.set('mode', mode);
+    if (runId && mode !== 'demo') params.set('run', runId);
+    const source = new EventSource(`/api/portfolio/run${params.toString() ? `?${params}` : ''}`);
     sourceRef.current = source;
 
     source.addEventListener('log', (e) => setLogs((prev) => [...prev, JSON.parse(e.data)]));
     source.addEventListener('ready', (e) => {
       source.close();
       const payload = JSON.parse(e.data);
-      setTelemetry(payload.telemetry);
-      fetch('/api/portfolio/data').then((r) => (r.ok ? r.json() : null)).then(setReport).catch(() => {});
       setPhase('done');
+      loadRuns(payload.run_id || runId);
       addToast?.('포트폴리오 생성 완료 — 아래에서 결과를 확인하세요.');
     });
     source.addEventListener('error', (e) => {
@@ -247,47 +291,55 @@ export default function PortfolioView({ addToast }) {
       setError(e.data ? JSON.parse(e.data) : '스트림이 끊겼습니다. 서버 로그를 확인하세요.');
       setPhase('error');
     });
-  }, [addToast]);
+  }, [addToast, runId, loadRuns]);
 
   const running = phase === 'running';
+  const runQuery = runId ? `?run=${encodeURIComponent(runId)}` : '';
 
   return (
-    <div className="max-w-5xl mx-auto px-6 pb-20">
+    <div className="max-w-6xl mx-auto px-6 pb-24">
       <div className="flex items-start justify-between flex-wrap gap-4 print:hidden">
         <div>
-          <h1 className="font-display font-bold tracking-tight text-3xl flex items-center gap-3">
+          <h1 className="font-display font-bold tracking-[-0.025em] text-4xl flex items-center gap-3">
             Portfolio
             <span className="font-mono text-[11px] font-medium text-gold flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5" /> VERIFIED LEDGER
             </span>
           </h1>
-          <p className="mt-2 text-sm text-mist leading-relaxed max-w-xl">
+          <p className="mt-3 text-[15px] text-mist leading-relaxed max-w-2xl">
             수집된 텔레메트리(에러 이력·성능 지표·Code Diff)를 LLM 서사와 SHA-256 서명이
             포함된 검증형 포트폴리오로 만듭니다. 버튼을 누르면 실제 파이프라인이 실행됩니다.
           </p>
+          {telemetry && (
+            <p className="mt-2 font-mono text-[13px] text-dim">
+              {telemetry.exists
+                ? <>생성 소스 · <span className="text-mist">{telemetry.overview?.project_name || '이름 없는 학습'}</span>{telemetry.run_id && <span className="text-gold"> · {telemetry.run_id}</span>}{telemetry.saved_at && ` · 저장 ${telemetry.saved_at.slice(0, 16).replace('T', ' ')}`}</>
+                : '생성 소스 · 아직 학습 텔레메트리가 없습니다 — Web IDE에서 학습을 먼저 실행하세요'}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
           {report && (
             <>
               <a
-                href="/api/portfolio/export.md"
+                href={`/api/portfolio/export.md${runQuery}`}
                 download
-                className="px-3.5 py-2 rounded-md border border-line text-[12px] text-mist hover:text-ink hover:border-white/25 transition-colors flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-md border border-line text-[13px] text-mist hover:text-ink hover:border-white/25 transition-colors flex items-center gap-1.5"
               >
                 <FileText className="w-3.5 h-3.5" /> MD 내보내기
               </a>
               <button
                 onClick={() => window.print()}
-                className="px-3.5 py-2 rounded-md border border-line text-[12px] text-mist hover:text-ink hover:border-white/25 transition-colors flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-md border border-line text-[13px] text-mist hover:text-ink hover:border-white/25 transition-colors flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" /> PDF로 저장
               </button>
             </>
           )}
           <button
-            onClick={run}
-            disabled={running}
-            className="px-4 py-2 rounded-md bg-ink text-void text-[13px] font-semibold hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            onClick={() => run()}
+            disabled={running || (telemetry && !telemetry.exists)}
+            className="px-4 py-2 rounded-md bg-ink text-void text-[14px] font-semibold hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {running
               ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> 파이프라인 실행 중…</>
@@ -296,8 +348,46 @@ export default function PortfolioView({ addToast }) {
         </div>
       </div>
 
+      {/* 학습 실행 이력 — 모델별로 따로 보관된 텔레메트리 중 하나를 고른다 */}
+      {runs.length > 0 && (
+        <div className="mt-8 print:hidden">
+          <div className="flex items-end justify-between border-b border-line pb-3">
+            <SecHead>학습 실행 이력</SecHead>
+            <span className="font-mono text-[13px] text-dim tabular">{runs.length}개 실행</span>
+          </div>
+          <div className="divide-y divide-line" role="radiogroup" aria-label="학습 실행 선택">
+            {runs.map((r) => (
+              <div
+                key={r.run_id}
+                role="radio"
+                aria-checked={runId === r.run_id}
+                tabIndex={0}
+                onClick={() => { setRunId(r.run_id); loadRun(r.run_id); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setRunId(r.run_id); loadRun(r.run_id); } }}
+                className={`px-4 py-3.5 cursor-pointer grid grid-cols-1 md:grid-cols-[1fr_auto] gap-x-6 gap-y-1 transition-colors ${
+                  runId === r.run_id ? 'bg-white/5' : 'hover:bg-white/[0.025]'
+                }`}
+              >
+                <div className="min-w-0">
+                  <p className="font-display font-bold text-[15px] truncate flex items-center gap-2">
+                    {r.project_name || r.run_id}
+                    {runId === r.run_id && <CheckCircle2 className="w-4 h-4 text-gold shrink-0" />}
+                  </p>
+                  <p className="mt-0.5 font-mono text-[13px] text-dim truncate">{r.run_id}{r.base_model && ` · ${r.base_model}`}</p>
+                </div>
+                <div className="font-mono text-[13px] text-dim md:text-right whitespace-nowrap">
+                  {r.saved_at.slice(0, 16).replace('T', ' ')}
+                  <span className="text-ember"> · 에러 {r.error_count}건</span>
+                  {r.has_portfolio && <span className="text-mint"> · 포트폴리오 있음</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {error && (
-        <div className="mt-6 flex items-start gap-2.5 rounded-md border border-ember/40 bg-ember/10 p-4 text-[13px] text-ember print:hidden">
+        <div className="mt-6 flex items-start gap-2.5 rounded-md border border-ember/40 bg-ember/10 p-4 text-[14px] text-ember print:hidden">
           <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span className="leading-relaxed">{error}</span>
         </div>
@@ -307,8 +397,8 @@ export default function PortfolioView({ addToast }) {
       {(running || logs.length > 0) && (
         <div className="mt-6 border border-line rounded-lg p-5 print:hidden">
           <div className="flex items-center justify-between mb-3">
-            <SecHead>Pipeline Log — run_demo.py</SecHead>
-            <span className="text-[12px] flex items-center gap-1.5">
+            <SecHead>포트폴리오 생성 로그</SecHead>
+            <span className="text-[13px] flex items-center gap-1.5">
               {running
                 ? <><Loader2 className="w-3.5 h-3.5 animate-spin text-cobalt" /><span className="text-cobalt">RUNNING</span></>
                 : phase === 'done'
@@ -334,9 +424,9 @@ export default function PortfolioView({ addToast }) {
         !running && (
           <div className="mt-8 border border-line rounded-lg p-10 text-center">
             <p className="font-display font-bold text-lg">아직 생성된 포트폴리오가 없습니다</p>
-            <p className="mt-2 text-[13px] text-mist leading-relaxed">
-              위의 실행 버튼을 누르면 데모 파이프라인이 에러 캡처부터 포트폴리오 생성까지
-              전 과정을 실행하고, 결과가 이 자리에 렌더링됩니다.
+            <p className="mt-2 text-[14px] text-mist leading-relaxed">
+              위의 실행 버튼을 누르면 선택한 학습 실행의 텔레메트리(에러 이력·성능 지표·Code Diff)로
+              포트폴리오를 생성해 이 자리에 렌더링합니다.
             </p>
           </div>
         )

@@ -28,7 +28,12 @@ class SimpleCNN(nn.Module):
         self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
-        self.fc = nn.Linear(32 * 7 * 7, 10)
+        # ── [실습 과제 · 의도된 오류] ────────────────────────────────────────
+        # 첫 실행에서 "mat1 and mat2 shapes cannot be multiplied" 가 납니다.
+        # 힌트: 28×28 입력이 MaxPool(2,2)을 두 번 지나면 몇×몇이 될까요?
+        # in_features를 직접 계산해 고친 뒤 다시 실행하세요 — 에러와 수정 diff가
+        # 그대로 포트폴리오의 '에러 해결' 서사로 기록됩니다.
+        self.fc = nn.Linear(32 * 14 * 14, 10)
 
     def forward(self, x):
         x = self.pool(F.relu(self.conv1(x)))

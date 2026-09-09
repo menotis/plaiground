@@ -83,10 +83,17 @@ def main():
     # 4. 모델 및 토크나이저 로드
     model_name = "$base_model"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)
+    # ── [실습 과제 · 의도된 오류 ②] ──────────────────────────────────────
+    # ①을 고친 뒤 학습 첫 스텝의 손실 계산에서 실패합니다 (dtype/target 관련 에러).
+    # 힌트: NSMC는 긍정/부정 몇 개의 클래스인가요? 분류 헤드의 출력 수와 맞춰 주세요.
+    model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=1)
 
+    # ── [실습 과제 · 의도된 오류 ①] ──────────────────────────────────────
+    # 토크나이즈 단계에서 KeyError가 납니다. 가장 흔한 실수 중 하나 —
+    # 코드가 기대하는 컬럼명과 데이터셋의 실제 컬럼명이 다를 때입니다.
+    # 힌트: print(cleaned_dataset.column_names) 로 실제 이름을 확인해 보세요.
     def tokenize_fn(examples):
-        return tokenizer(examples["document"], truncation=True, max_length=$max_length, padding="max_length")
+        return tokenizer(examples["text"], truncation=True, max_length=$max_length, padding="max_length")
 
     tokenized_dataset = cleaned_dataset.map(tokenize_fn, batched=True)
     split_dataset = tokenized_dataset.train_test_split(test_size=0.2)

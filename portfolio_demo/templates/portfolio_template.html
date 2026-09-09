@@ -187,9 +187,20 @@
         <span class="badge badge-red font-mono">{{ portfolio.troubleshooting.error_type }}</span>
       </div>
 
+      {% if portfolio.troubleshooting.errors %}
+      <div class="space-y-3 mb-6">
+        {% for e in portfolio.troubleshooting.errors %}
+        <div class="bg-slate-900/40 p-3.5 rounded-lg border border-slate-700/40">
+          <p class="font-mono text-sm text-red-400">#{{ loop.index }} {{ e.error_type }}</p>
+          <p class="text-sm text-slate-300 mt-2"><span class="text-slate-500">원인</span> · {{ e.cause }}</p>
+          <p class="text-sm text-slate-300 mt-1"><span class="text-slate-500">해결</span> · {{ e.fix }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
         <div class="space-y-2">
-          <p class="section-label">상황 및 근본 원인 분석</p>
+          <p class="section-label">원인 요약</p>
           <p class="text-sm text-slate-300 leading-relaxed bg-slate-900/40 p-3.5 rounded-lg border border-slate-700/40">
             {{ portfolio.troubleshooting.root_cause }}
           </p>

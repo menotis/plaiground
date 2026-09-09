@@ -41,9 +41,18 @@ class PerformanceBenchmarks(BaseModel):
     )
 
 
+class ErrorItem(BaseModel):
+    """에러 하나 = 원인 하나 = 해결 하나."""
+
+    error_type: str = Field(..., description="에러 유형과 메시지 (e.g. KeyError: 'text')")
+    cause: str = Field(..., description="이 에러 하나의 원인 (한국어 1~2문장)")
+    fix: str = Field(..., description="이 에러를 고친 방법 (한국어 1문장)")
+
+
 class TroubleshootingNarrative(BaseModel):
     """에러 발생 → 해결 서사 (STAR 구조)."""
 
+    errors: List[ErrorItem] = Field(default_factory=list, description="발생 순서대로, 에러당 한 항목")
     error_type: str = Field(..., description="에러 유형 (e.g. OOMError, ValueError)")
     root_cause: str = Field(..., description="근본 원인 분석")
     resolution_diff: str = Field(..., description="해결책 코드 Diff 요약")

@@ -23,6 +23,7 @@ etc/
 portfolio_demo/.telemetry/
 portfolio_demo/portfolio_output.html
 portfolio_demo/portfolio_output.json
+portfolio_demo/output/
 
 # 커뮤니티 추천·조회 누적 카운트 + 사용자 댓글 (런타임 상태)
 community_demo/state.json

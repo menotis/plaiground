@@ -87,7 +87,7 @@ def main() -> None:
     print(f"[Step 5] ✅ PortfolioSchema validated: {schema.overview.title}")
 
     # Step 6: HTML 렌더링
-    output_path = render_portfolio(schema, raw_telemetry)
+    output_path = render_portfolio(schema, raw_telemetry, run_id=tracker.run_id)
     print(f"[Step 6] ✅ Portfolio HTML rendered → {output_path}")
 
     print()
