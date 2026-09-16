@@ -8,6 +8,16 @@ import PortfolioView from './PortfolioView.jsx';
 import Lms from './Lms.jsx';
 import Community from './Community.jsx';
 
+// 로고 — doc/로고v2_03_궤적_Trace.png 를 벡터로 옮김. 점은 currentColor라 다크/라이트 어디서든 보인다
+const Logo = ({ className }) => (
+  <svg viewBox="230 270 590 490" className={className} aria-hidden="true">
+    <circle cx="283" cy="705" r="33" fill="currentColor" />
+    <circle cx="363" cy="620" r="40" fill="currentColor" />
+    <circle cx="453" cy="543" r="46" fill="currentColor" />
+    <path d="M552 466 C 625 402, 700 356, 768 342" stroke="#12B981" strokeWidth="92" strokeLinecap="round" fill="none" />
+  </svg>
+);
+
 // ─── 페이지 전환 — View Transitions API (웹 표준: 라이브러리·라이선스 불필요) ──
 // 지원 브라우저는 이전/새 화면을 크로스페이드+슬라이드로 잇고,
 // 미지원 브라우저는 새 화면 등장 애니메이션(.vt-fallback)으로 폴백한다.
@@ -173,8 +183,8 @@ function TopBar({ view, go, role, onLogin, onLogout }) {
   return (
     <header data-topbar className="fixed top-0 inset-x-0 z-40 bg-void/85 backdrop-blur-md border-b border-line print:hidden">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <button onClick={() => go('landing')} className="flex items-center gap-2.5 shrink-0" aria-label="메인으로 이동">
-          <span className="w-2.5 h-2.5 rounded-full bg-gold" />
+        <button onClick={() => go('landing')} className="flex items-center gap-2 shrink-0" aria-label="메인으로 이동">
+          <Logo className="w-7 h-7 text-ink" />
           <span className="font-display font-bold tracking-tight text-[15px]">plAI-ground</span>
         </button>
         <nav className="hidden md:flex items-center gap-6 text-[13px]">
@@ -415,16 +425,11 @@ function Landing({ go, role, onLogin, onLogout }) {
       {/* ── 푸터 ── */}
       <footer className="border-t border-line">
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2 h-2 rounded-full bg-gold" />
+          <div className="flex items-center gap-2">
+            <Logo className="w-5 h-5 text-ink" />
             <span className="font-display font-bold text-sm">plAI-ground</span>
             <span className="text-[12px] text-dim">by MENOTIS</span>
           </div>
-          <nav className="flex items-center gap-6 text-[12px] text-dim">
-            <button onClick={() => go('start')} className="hover:text-mist transition-colors">Start AI</button>
-            <button onClick={() => go('view')} className="hover:text-mist transition-colors">View AI</button>
-            <button onClick={() => go('portfolio')} className="hover:text-mist transition-colors">Portfolio</button>
-          </nav>
           <p className="text-[12px] text-dim">© 2026 plAI-ground. All rights reserved.</p>
         </div>
       </footer>

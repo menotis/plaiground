@@ -15,6 +15,7 @@ from torchvision import datasets, transforms
 # 1. 텔레메트리 SDK 임포트 (train_real.py와 동일 패턴)
 from portfolio_demo.telemetry.interceptor import install_error_interceptor
 from portfolio_demo.telemetry.tracker import DiffStackTracker
+from portfolio_demo.telemetry.recorder import TrainRecorder
 
 # 에러 인터셉터 즉시 활성화 (런타임 Exception 발생 시 last_error.json에 덤프)
 install_error_interceptor()
@@ -99,14 +100,22 @@ def main():
     # 4. 베이스라인 평가 지표 (학습 전 랜덤 초기화 상태)
     baseline_metrics = evaluate(model, train_loader, device)
 
+    # 시각화용 기록기 — 5스텝마다 전체 가중치 프레임 저장 (약 18MB), .telemetry/viz/<run_id>/
+    recorder = TrainRecorder(model, run_id=tracker.run_id, every=5, hparams={
+        "batch_size": $batch_size, "learning_rate": $learning_rate, "epochs": $epochs,
+        "optimizer": "Adam", "loss": "cross_entropy", "steps_per_epoch": len(train_loader),
+    })
+
     print("[2/4] 모델 학습 실행...")
+    steps_per_epoch = len(train_loader)
     for epoch in range($epochs):
-        for x, y in train_loader:
+        for i, (x, y) in enumerate(train_loader):
             x, y = x.to(device), y.to(device)
             optimizer.zero_grad()
             loss = F.cross_entropy(model(x), y)
             loss.backward()
             optimizer.step()
+            recorder.record(loss.item(), epoch=epoch + (i + 1) / steps_per_epoch)
         print(f"  epoch {epoch + 1}/$epochs 완료")
 
     print("[3/4] 최종 성능 평가...")
