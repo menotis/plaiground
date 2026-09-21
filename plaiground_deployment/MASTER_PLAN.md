@@ -68,7 +68,15 @@ Stage D  (3~4주)   D1 멀티유저 격리 ───────┐
 
 ## 2. Stage A — 기반 만들기 (2일)
 
-### A1. 폴더 이동 전용 · 담당: 준형 · 약 5시간
+### A1. 폴더 이동 전용 · 담당: 준형 · 약 5시간 · **완료 (2026-09-21, A1-5만 남음)**
+
+브랜치 `restructure/stage-a1`. 계획과 달라진 점:
+- 경로 상수 30여 개를 파일마다 다시 계산하는 대신 `paths.py` 두 개로 모았고, 런타임 데이터도 이때 `var/`로 옮겼다. 원래 B1-1과 B1-2의 일부였다. B1-1에는 환경변수 읽기, B1-2에는 사용자별 워크스페이스 디렉터리만 남는다.
+- 점검 명령(A1-0)은 새 구조 기준으로 `scripts/check.py`에 만들었다. 이동 전 기준선은 기존 자체 점검을 직접 돌려 확인했다.
+- `uv`가 설치되어 있지 않아 루트 `pyproject.toml`은 만들지 않았다. 설치는 `pip install -e packages/telemetry -e apps/host`.
+- 컨테이너 이미지 폴더는 이미지 이름과 맞춰 `apps/host/docker/plaiground-base`로 유지했다. 이름을 바꾸면 이미지를 다시 빌드해야 한다.
+- `web_demo/`의 화면 스펙 4개는 `PRODUCT.md`가 참조하고 있어 삭제하지 않고 `docs/specs/`로 옮겼다.
+- `PRODUCT.md`는 루트에, `DESIGN.md`는 `apps/web/`에 두었다. 디자인 도구가 이 위치를 기준으로 찾는다.
 
 GPU가 있는 PC에서 마지막 전체 흐름 확인을 해야 하므로 준형이 맡는다. 상세는 [directory_plan.md](directory_plan.md) 4장(목표 구조)과 5장(이동 순서).
 
@@ -176,7 +184,7 @@ A1-0을 맨 앞에 둔 이유: 이동 단계마다 GPU와 Docker를 띄워 전�
 
 **완료 기준:** [DEPLOYMENT_PLAN.md](DEPLOYMENT_PLAN.md) 6장의 보안 점검표를 두 사람이 같이 돌려 전부 실패함을 확인한다.
 
-Stage D와 별개로, [STATUS.md](../web_combine_demo/STATUS.md)에 남아 있는 기능 작업(llama·gemma에 View AI 기록기 연결, 대형 모델용 저장 방식)은 **Stage C 이후**로 미룬다. 구조와 배포가 흔들리는 동안 기능을 같이 늘리면 두 종류의 변경이 섞인다. 파일럿 상대에게 View AI 시연이 꼭 필요하다면 LoRA 두 모델 연결만 Stage C 직후에 넣는다.
+Stage D와 별개로, [STATUS.md](../docs/STATUS.md)에 남아 있는 기능 작업(llama·gemma에 View AI 기록기 연결, 대형 모델용 저장 방식)은 **Stage C 이후**로 미룬다. 구조와 배포가 흔들리는 동안 기능을 같이 늘리면 두 종류의 변경이 섞인다. 파일럿 상대에게 View AI 시연이 꼭 필요하다면 LoRA 두 모델 연결만 Stage C 직후에 넣는다.
 
 ---
 

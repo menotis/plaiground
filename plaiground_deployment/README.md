@@ -10,11 +10,11 @@ plAI-ground를 로컬 데모에서 실제 배포로 옮기는 작업 공간. 배
 
 [directory_plan.md](directory_plan.md) — 저장소 디렉토리 구조 진단과 목표 구조, 이동 순서. Phase 1 전에 읽는다.
 
-현재 구현 상태는 [../web_combine_demo/STATUS.md](../web_combine_demo/STATUS.md).
+현재 구현 상태는 [../docs/STATUS.md](../docs/STATUS.md).
 
 ## 현재 위치
 
-Stage A 시작 전. A1(폴더 이동 전용)과 A2(계정·조직 만들기)를 병행한다.
+Stage A 진행 중. **A1(폴더 이동) 완료** — 브랜치 `restructure/stage-a1`. 남은 것: A1-5 전체 흐름 수동 확인(Docker 필요), A2 계정·조직 만들기.
 
 ## 앞으로 이 폴더에 생길 것
 

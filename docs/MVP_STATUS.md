@@ -1,5 +1,7 @@
 # plAI-ground MVP 구현 상태 명세서
 
+> **경로 안내 (2026-09-21):** 이 문서는 폴더 구조 변경 이전에 작성되었다. 본문의 `ai_set_demo/`, `portfolio_demo/`, `community_demo/`, `web_combine_demo/` 경로는 옛 이름이다. 현재 위치는 저장소 루트 [README.md](../README.md)의 대응표를 본다.
+
 작성 기준: 2026-09-08 · 커밋 `485ecbf` · 대상 폴더 `ai_set_demo/`, `portfolio_demo/`, `web_combine_demo/` (+ 이들이 의존하는 `community_demo/`)
 
 ---

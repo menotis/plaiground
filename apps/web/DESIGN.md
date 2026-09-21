@@ -97,7 +97,7 @@ components:
 
 # Design System: plAI-ground (web_combine_demo)
 
-> 적용 범위: `web_combine_demo/` 한정. 옆의 `web_demo/`는 의도적으로 다른(각진 rounded-sm · slate) 시스템을 쓰며 이 문서의 지배를 받지 않는다.
+> 적용 범위: `apps/web/` 한정 (옛 이름 `web_combine_demo/`). 옆의 `web_demo/`는 의도적으로 다른(각진 rounded-sm · slate) 시스템을 쓰며 이 문서의 지배를 받지 않는다.
 
 ## Overview
 

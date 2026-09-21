@@ -1,7 +1,9 @@
 # plAI-ground — 구현 현황 (AI 엔지니어 리뷰)
 
+> **경로 안내 (2026-09-21):** 이 문서는 폴더 구조 변경 이전에 작성되었다. 본문의 `ai_set_demo/`, `portfolio_demo/`, `community_demo/`, `web_combine_demo/` 경로는 옛 이름이다. 현재 위치는 저장소 루트 [README.md](../README.md)의 대응표를 본다.
+
 작성 기준: 2026-09-19 · 최신 커밋 `6340c88` (View AI 실데이터 시각화)
-이전 상태 문서: `../MVP_STATUS.md` (2026-09-08, `485ecbf` 기준 — **View AI 항목은 이 문서 작성 시점 기준 stale**)
+이전 상태 문서: [MVP_STATUS.md](MVP_STATUS.md) (2026-09-08, `485ecbf` 기준 — **View AI 항목은 이 문서 작성 시점 기준 stale**)
 
 ---
 
