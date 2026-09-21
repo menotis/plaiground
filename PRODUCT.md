@@ -33,7 +33,7 @@ Colab/AWS와 달리 (1) 환경 세팅이 카탈로그 기반 원클릭이고, (2
 ## Capabilities and Constraints
 
 - 실행 가능한 실제 기능: 환경 감지, 모델 카탈로그, SSE 프로비저닝 위저드, IDE 임베딩, 포트폴리오 파이프라인 실행 및 HTML 결과 임베드.
-- 목업으로만 존재: View AI 실시간 학습 시각화, Faculty LMS 대시보드 (스펙: `web_demo/0*_SPEC.md`).
+- 목업으로만 존재: View AI 실시간 학습 시각화, Faculty LMS 대시보드 (스펙: `docs/specs/0*_SPEC.md`).
 - 사전 조건: Docker Desktop 실행 + `plaiground-base:dev` 이미지.
 - 카피 언어(확정): 영문 헤드라인/라벨 + 한글 본문.
 
@@ -45,7 +45,7 @@ Colab/AWS와 달리 (1) 환경 세팅이 카탈로그 기반 원클릭이고, (2
 ## Evidence on Hand
 
 - 사업계획: `doc/venture.md` (가격: B2B 9,720,000원/년, B2C Standard 15,000원·Premium 37,500원/월, 마진율 50~62%).
-- 실동작 코드: `ai_set_demo/`, `portfolio_demo/`, 기존 UI `web_demo/app/`.
+- 실동작 코드: `ai_set_demo/`, `portfolio_demo/`, 구버전 UI `web_demo/app/`는 삭제됨(git 이력에 보존).
 - 생성된 실물 포트폴리오: `portfolio_demo/portfolio_output.html`.
 - 없음(날조 금지): 고객 추천사, 실제 대학 계약 실적, 벤치마크 수치.
 

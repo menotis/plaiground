@@ -6,7 +6,7 @@
 **목표:** AI 모델을 고르면 → 로컬 GPU 환경이 자동 세팅되고 → 예시 코드가 생성되며 → 소규모 데이터셋으로 즉시 학습이 도는 원클릭 MVP.
 
 **범위 밖 (지금 안 만듦):**
-- RunPod/클라우드 GPU 연동 (`web_demo/02_SETUP_WORKSPACE_SPEC.md`의 Card B) — 로컬(BYOG) 카드만 구현
+- RunPod/클라우드 GPU 연동 (`docs/specs/02_SETUP_WORKSPACE_SPEC.md`의 Card B) — 로컬(BYOG) 카드만 구현
 - 커스텀 웹 프론트엔드(React, `web_demo/`) — 웹 IDE는 `code-server`(오픈소스)를 그대로 쓰고, `web_demo`가 스펙한 자체 UI는 나중 단계
 - 모델 카탈로그 관리 어드민, 다중 사용자 동시성 — 1인 로컬 실행만 가정
 
@@ -21,7 +21,7 @@
 | 에러 자동 캡처 | `portfolio_demo/telemetry/interceptor.py` (`install_error_interceptor`) | 이미 `sys.excepthook` 기반으로 완성됨. 재구현 금지. |
 | 학습 통계/벤치마크 기록 | `portfolio_demo/telemetry/tracker.py` (`DiffStackTracker`) | `log_dataset`, `log_benchmarks`, `save_run()` 그대로 사용 |
 | 실행 가능한 학습 스크립트의 "정답 모양" | `portfolio_demo/train_real.py` | 이 파일 자체가 BoilerplateGenerator가 찍어내야 할 산출물의 레퍼런스. 구조를 템플릿화만 하면 됨 |
-| 하드웨어 감지 UI 문구/상태값 | `web_demo/02_SETUP_WORKSPACE_SPEC.md` STEP 1 | `[SCAN_COMPLETE]`, VRAM 표시 형식 등 나중에 UI 붙일 때 그대로 사용 |
+| 하드웨어 감지 UI 문구/상태값 | `docs/specs/02_SETUP_WORKSPACE_SPEC.md` STEP 1 | `[SCAN_COMPLETE]`, VRAM 표시 형식 등 나중에 UI 붙일 때 그대로 사용 |
 
 즉 이번 MVP에서 진짜로 새로 짜야 하는 건 "모델 선택 → 그 모델에 맞는 `train_real.py` 변형 스크립트 생성 → 실행" 파이프라인뿐이다.
 
@@ -30,7 +30,7 @@
 단순히 게을러서가 아니라 **계약(Contract) 호환성** 때문이다.
 
 1. **다운스트림이 이미 정해진 입력 형식을 기다리고 있다.** `services/renderer.py`의 `render_portfolio(schema, telemetry: dict)`와 `core/schema.py`의 `PortfolioSchema`는 `tracker.save_run()`이 만드는 `raw_telemetry.json`의 구조(`overview`/`dataset`/`benchmarks`/`last_error`/`error_history`/`git_diff`)를 그대로 소비하도록 이미 짜여 있다. venture.md에서 "**MVP 완료 ✅**"로 표시된 기능이 바로 이 자동 포트폴리오 생성이다. 새 트래커를 만들면 JSON 모양이 달라지고, 이미 완성된 렌더러가 그 데이터를 못 읽는다 — 파이프라인이 중간에서 끊긴다.
-2. **UI 스펙이 이미 이 코드를 가리키고 있다.** `web_demo/02_SETUP_WORKSPACE_SPEC.md`의 "2줄 코드 파이프라인 연동" (`plaiground.init(auto_capture=True)`)은 개념적으로 `install_error_interceptor()` + `DiffStackTracker`와 정확히 같은 기능이다. 즉 이건 아직 안 만든 기능이 아니라 **이미 구현된 기능에 UI 문서가 붙어 있는 상태**다. 여기서 새로 만들면 같은 기능의 구현체가 두 개가 되고, 나중에 UI를 연결할 때 "어느 쪽에 연결해야 하나"라는 불필요한 분기가 생긴다.
+2. **UI 스펙이 이미 이 코드를 가리키고 있다.** `docs/specs/02_SETUP_WORKSPACE_SPEC.md`의 "2줄 코드 파이프라인 연동" (`plaiground.init(auto_capture=True)`)은 개념적으로 `install_error_interceptor()` + `DiffStackTracker`와 정확히 같은 기능이다. 즉 이건 아직 안 만든 기능이 아니라 **이미 구현된 기능에 UI 문서가 붙어 있는 상태**다. 여기서 새로 만들면 같은 기능의 구현체가 두 개가 되고, 나중에 UI를 연결할 때 "어느 쪽에 연결해야 하나"라는 불필요한 분기가 생긴다.
 3. **Deep Module 원칙(Deletion Test)으로 봐도 그렇다.** `telemetry/interceptor.py`를 지우고 ai_set_demo 안에 다시 만든다고 하면, `sys.excepthook` 체이닝·에러 히스토리 누적·JSON 스키마 같은 복잡도가 토씨 하나 안 틀리고 다시 나타난다. 이건 "지워도 사라지는 pass-through"가 아니라 "지우면 반드시 다시 만들어야 하는 진짜 모듈"이라는 뜻 — 그러니 인스턴스를 하나 더 만들지 말고 가져다 쓰는 게 맞다.
 4. **`train_real.py`는 설계 문서가 아니라 검증된 구현체다.** BoilerplateGenerator가 찍어낼 스크립트의 "모양"(임포트 순서, tracker 호출 시점, 에러 처리 위치)을 처음부터 설계하면 그 자체가 리스크다. 이미 한 번 실행되어 "✅ 실제 학습 텔레메트리 수집 완료"까지 확인된 코드가 있으므로, 그 모양을 템플릿 변수만 바꿔 재사용하면 설계 리스크가 0에 가까워진다.
 

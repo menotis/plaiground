@@ -1,5 +1,5 @@
 """
-api_server.py — web_demo를 ai_set_demo에 연결하는 로컬 HTTP 서버.
+api_server.py — 프론트엔드를 ai_set_demo에 연결하는 로컬 HTTP 서버.
 
 stdlib http.server만 사용한다. FastAPI/Flask를 새로 깔 이유가 없다 —
 엔드포인트 3개에 사용자 1명, 루프백 전용이다.
@@ -15,7 +15,7 @@ stdlib http.server만 사용한다. FastAPI/Flask를 새로 깔 이유가 없다
   GET /api/viz/<run>/schema      모델 껍데기 (schema.json) + frame_count
   GET /api/viz/<run>/rows        step별 loss/grad (frames.jsonl → JSON 배열)
   GET /api/viz/<run>/frame?index=k  k번째 가중치 프레임을 float32 바이너리로
-  그 외 경로                      web_demo/app/dist 정적 파일 (없으면 안내 메시지)
+  그 외 경로                      web_combine_demo/app/dist 정적 파일 (없으면 안내 메시지)
 
 ponytail: 인증 없이 127.0.0.1에만 바인딩한다. 이 서버는 docker 명령과 학습을
 실행하므로 외부에 노출하면 안 된다 — 0.0.0.0으로 여는 순간 원격 코드 실행이다.
@@ -35,7 +35,7 @@ from .provisioner import _IMAGE, _image_exists  # 같은 패키지 내부 재사
 from .setup_and_train import provision
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_STATIC_DIR = _REPO_ROOT / "web_demo" / "app" / "dist"
+_STATIC_DIR = _REPO_ROOT / "web_combine_demo" / "app" / "dist"
 _VIZ_DIR = _REPO_ROOT / "portfolio_demo" / ".telemetry" / "viz"
 _ENV_FILE = Path(__file__).resolve().parent / ".env"
 _DEFAULT_PORT = 8765
@@ -128,7 +128,7 @@ class _Handler(SimpleHTTPRequestHandler):
             self._viz(route)
         elif not _STATIC_DIR.exists():
             self._send_json(
-                {"error": "프론트엔드 빌드가 없습니다. web_demo/app에서 'npm run build'를 먼저 실행하세요."},
+                {"error": "프론트엔드 빌드가 없습니다. web_combine_demo/app에서 'npm run build'를 먼저 실행하세요."},
                 status=503,
             )
         else:
@@ -213,7 +213,7 @@ def serve(port: int = _DEFAULT_PORT) -> None:
     with ThreadingHTTPServer(("127.0.0.1", port), handler) as httpd:
         print(f"plAI-ground 데모 서버: http://127.0.0.1:{port}")
         if not _STATIC_DIR.exists():
-            print("  (프론트엔드 미빌드 - web_demo/app에서 'npm run build' 또는 'npm run dev')")
+            print("  (프론트엔드 미빌드 - web_combine_demo/app에서 'npm run build' 또는 'npm run dev')")
         print("  중지: Ctrl+C")
         try:
             httpd.serve_forever()
