@@ -1,0 +1,154 @@
+# 자동 생성됨 (apps/host/plaiground_host/workspace/templates/gemma4_e2b_sft.py.tmpl) — 직접 수정해도 됨, 재생성 시 덮어써짐.
+import os
+import sys
+if sys.platform == "win32":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+import math
+import torch
+from transformers import (
+    AutoModelForCausalLM, AutoTokenizer, DataCollatorForLanguageModeling,
+    Trainer, TrainingArguments,
+)
+from datasets import load_dataset, Dataset
+from peft import LoraConfig, get_peft_model
+
+# 1. 텔레메트리 SDK 임포트
+from plaiground_telemetry.interceptor import install_error_interceptor
+from plaiground_telemetry.tracker import DiffStackTracker
+
+install_error_interceptor()
+
+MODEL_NAME = "$base_model"  # google/gemma-4-E2B-it — 게이트 모델
+PROMPT = "다음 영화 리뷰의 감성을 '긍정' 또는 '부정' 한 단어로 답하라.\n리뷰: {doc}\n감성:"
+
+
+def load_nsmc():
+    """NSMC 원본 TSV에서 1,200개 서브셋. 오프라인이면 내장 샘플로 폴백."""
+    try:
+        ds = load_dataset(
+            "csv",
+            data_files="https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt",
+            delimiter="\t",
+            split="train[:1200]",
+        )
+        return ds, 1200
+    except Exception as e:
+        print(f"경고: 원격 데이터셋 로드 실패 ({e}) — 내장 샘플로 대체합니다.")
+        rows = {
+            "document": [
+                "배우들의 연기와 연출이 완벽했던 인생 영화입니다.",
+                "스토리가 엉성하고 지루해서 끝까지 보기 힘들었어요.",
+            ] * 150,
+            "label": [1, 0] * 150,
+        }
+        return Dataset.from_dict(rows), 300
+
+
+def main():
+    if not (os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")):
+        print("안내: google/gemma-4-E2B-it 는 게이트 모델입니다.")
+        print("  1) https://huggingface.co/google/gemma-4-E2B-it 에서 라이선스 동의")
+        print("  2) 터미널에서 HF_TOKEN 환경변수 설정 후 재실행")
+
+    # 2. 트래커 초기화
+    tracker = DiffStackTracker(project_name="$project_name", task_type="$task_type")
+
+    # 3. 데이터 로드 및 감성 지시형 변환
+    print("[1/4] NSMC 로드 및 지시형 프롬프트 변환...")
+    dataset, raw_count = load_nsmc()
+    dataset = dataset.filter(
+        lambda x: x.get("document") is not None and len(str(x["document"]).strip()) > 5
+    )
+    processed_count = len(dataset)
+
+    tracker.log_dataset(
+        raw_len=raw_count,
+        processed_len=processed_count,
+        notes=[
+            "5자 미만 노이즈 리뷰 필터링",
+            "이진 라벨을 '긍정'/'부정' 한국어 지시형 타깃으로 변환",
+            "지시 프롬프트 직렬화 후 max_length $max_length 트렁케이션",
+        ],
+        avg_len_before=0.0,
+        avg_len_after=0.0,
+    )
+
+    # 4. 토크나이저/모델 + LoRA
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_NAME,
+        torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+    )
+    # ── [실습 과제 · 의도된 오류] ────────────────────────────────────────
+    # 첫 실행에서 peft가 "Target modules ... not found in the base model" 을 냅니다.
+    # 힌트: Gemma의 어텐션 프로젝션 모듈 이름을 model.named_modules()로 확인해 보세요.
+    lora = LoraConfig(r=$lora_r, lora_alpha=16, target_modules=["query", "value"], task_type="CAUSAL_LM")
+    model = get_peft_model(model, lora)
+    model.print_trainable_parameters()
+
+    def to_text(ex):
+        answer = "긍정" if int(ex["label"]) == 1 else "부정"
+        return {"text": PROMPT.format(doc=str(ex["document"])[:200]) + " " + answer}
+
+    def tokenize_fn(batch):
+        return tokenizer(batch["text"], truncation=True, max_length=$max_length)
+
+    tokenized = dataset.map(to_text).map(tokenize_fn, batched=True, remove_columns=dataset.column_names)
+    split = tokenized.train_test_split(test_size=0.1, seed=42)
+    collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
+
+    args = TrainingArguments(
+        output_dir="./results_gemma4",
+        num_train_epochs=$epochs,
+        per_device_train_batch_size=$batch_size,
+        gradient_accumulation_steps=8,
+        learning_rate=$learning_rate,
+        eval_strategy="no",
+        save_strategy="no",
+        bf16=torch.cuda.is_available(),
+        logging_steps=10,
+    )
+    trainer = Trainer(model=model, args=args, train_dataset=split["train"],
+                      eval_dataset=split["test"], data_collator=collator)
+
+    # 5. 학습 전 실측 베이스라인
+    print("[2/4] 학습 전 베이스라인 평가...")
+    base_eval = trainer.evaluate()
+    baseline_metrics = {
+        "eval_loss": round(base_eval["eval_loss"], 4),
+        "perplexity": round(math.exp(min(base_eval["eval_loss"], 20)), 2),
+    }
+
+    print("[3/4] LoRA 파인튜닝 실행...")
+    trainer.train()
+    final_eval = trainer.evaluate()
+    final_metrics = {
+        "eval_loss": round(final_eval["eval_loss"], 4),
+        "perplexity": round(math.exp(min(final_eval["eval_loss"], 20)), 2),
+    }
+
+    tracker.log_benchmarks(
+        baseline=baseline_metrics,
+        final=final_metrics,
+        params={
+            "base_model": MODEL_NAME,
+            "method": "LoRA (r=$lora_r, q_proj/v_proj)",
+            "learning_rate": $learning_rate,
+            "batch_size": $batch_size,
+            "gradient_accumulation_steps": 8,
+            "epochs": $epochs,
+            "max_length": $max_length,
+        },
+    )
+
+    print("[4/4] 텔레메트리 저장 중...")
+    tracker.save_run()
+    print("완료 - 학습 텔레메트리 수집: .telemetry/raw_telemetry.json")
+
+
+if __name__ == "__main__":
+    main()

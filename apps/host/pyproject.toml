@@ -1,0 +1,24 @@
+[project]
+name = "plaiground-host"
+version = "0.1.0"
+description = "GPU 호스트 API 서버 — 환경 프로비저닝, 학습 스크립트 생성, 포트폴리오 생성, 학습 시각화 데이터"
+requires-python = ">=3.10"
+dependencies = [
+    "plaiground-telemetry",
+    "google-genai",
+    "python-dotenv",
+    "pydantic>=2",
+    "jinja2",
+    "numpy",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["plaiground_host*"]
+
+[tool.setuptools.package-data]
+"plaiground_host.workspace" = ["templates/*.tmpl"]
+"plaiground_host.portfolio" = ["templates/*.html"]

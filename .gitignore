@@ -19,22 +19,17 @@ doc/
 
 etc/
 
-# DiffStack Engine 런타임 데이터
-portfolio_demo/.telemetry/
-portfolio_demo/portfolio_output.html
-portfolio_demo/portfolio_output.json
-portfolio_demo/output/
-
-# 커뮤니티 추천·조회 누적 카운트 + 사용자 댓글 (런타임 상태)
-community_demo/state.json
-community_demo/comments.json
-
-# ai_set_demo 생성 산출물 (재생성 가능)
-ai_set_demo/generated/
+# 런타임 데이터 — 실행 중 생기는 파일은 전부 여기. 소스 폴더에는 쓰지 않는다.
+#   var/telemetry  학습 실행 기록·에러 이력·View AI 프레임
+#   var/output     생성된 포트폴리오
+#   var/generated  생성된 학습 스크립트 (사용자가 직접 고친 내용 포함)
+#   var/community  추천·조회 누적, 댓글
+var/
 
 # Python
 __pycache__/
 *.pyc
+*.egg-info/
 
 # Node / Vite
 node_modules/
@@ -52,8 +47,8 @@ graphify-out/
 
 # impeccable 디자인 리뷰 스크린샷 및 훅 캐시 (재생성 가능)
 # design.json은 디자인 시스템 정의라 추적 대상 — 여기서 제외하지 않는다.
-.impeccable/review/
-.impeccable/hook.cache.json
+**/.impeccable/review/
+**/.impeccable/hook.cache.json
 
 # Windows 폴더 메타데이터
 desktop.ini

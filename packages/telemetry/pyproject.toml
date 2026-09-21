@@ -1,0 +1,18 @@
+[project]
+name = "plaiground-telemetry"
+version = "0.1.0"
+description = "사용자 학습 컨테이너 안에서 실행되는 텔레메트리 SDK (에러 인터셉터, 실행 요약, 스텝별 가중치 기록)"
+requires-python = ">=3.10"
+# 이 패키지는 사용자 컨테이너에서 실행된다. 플랫폼 비밀이나 서버 로직을 넣지 않는다.
+# interceptor/tracker는 표준 라이브러리만 쓴다. recorder만 torch가 필요하다.
+dependencies = []
+
+[project.optional-dependencies]
+recorder = ["torch"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["plaiground_telemetry"]
