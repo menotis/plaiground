@@ -12,6 +12,8 @@ plAI-ground를 로컬 데모에서 실제 배포로 옮기는 작업 공간. 배
 
 개인별 분담 업무: [assignment_host_junhyung.md](assignment_host_junhyung.md)(GPU 호스트 층, 준형) · [assignment_edge_sanghyup.md](assignment_edge_sanghyup.md)(엣지 층, 상협). 각자 이것만 보고 일해도 되게 썼다.
 
+[laptop_and_tailscale.md](laptop_and_tailscale.md) — 노트북에서 로컬로 실행하는 절차와 Tailscale로 호스트에 접속하는 절차(Stage C).
+
 현재 구현 상태는 [../docs/STATUS.md](../docs/STATUS.md).
 
 ## 현재 위치
