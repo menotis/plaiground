@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, Check, Copy, Cpu, ExternalLink, Eye, Loader2, Play, Terminal } from 'lucide-react';
+import { api } from './api.js';
 
 // ─── Web IDE — 컨테이너 안 code-server를 iframe으로 임베딩 ────────────────────
 // Start AI 세션이 없어도 code-server(8080)가 살아 있으면 바로 접속한다.
@@ -10,7 +11,7 @@ export default function IdeView({ session, staged, go, addToast }) {
   const [ide, setIde] = useState(null); // /api/ide/status — {running, ide_url}
 
   useEffect(() => {
-    fetch('/api/ide/status')
+    api('/api/ide/status')
       .then((r) => r.json())
       .then(setIde)
       .catch(() => setIde({ running: false }));
