@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import { api } from './api.js';
 import { Activity, Box, Maximize2, Minimize2, Pause, Play, Square } from 'lucide-react';
 import { H, MAX_EDGES, W, anchor2d, buildLayout, edgeDim, edgeMask, edgeWeights, heatCss, kernelWindow, nodeValues, pt2d } from './netLayout.js';
 
@@ -217,7 +218,7 @@ export default function ViewAI({ addToast }) {
   const fsRef = useRef(null);
 
   useEffect(() => {
-    fetch('/api/viz/runs').then((r) => r.json()).then((list) => { setRuns(list); if (list[0]) setRunId(list[0].run_id); }).catch(() => setRuns([]));
+    api('/api/viz/runs').then((r) => r.json()).then((list) => { setRuns(list); if (list[0]) setRunId(list[0].run_id); }).catch(() => setRuns([]));
     const onFs = () => setFs(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onFs);
     return () => document.removeEventListener('fullscreenchange', onFs);
@@ -227,8 +228,8 @@ export default function ViewAI({ addToast }) {
     if (!runId) return;
     cache.current = new Map();
     Promise.all([
-      fetch(`/api/viz/${runId}/schema`).then((r) => r.json()),
-      fetch(`/api/viz/${runId}/rows`).then((r) => r.json()),
+      api(`/api/viz/${runId}/schema`).then((r) => r.json()),
+      api(`/api/viz/${runId}/rows`).then((r) => r.json()),
     ]).then(([s, rs]) => { setSchema(s); setRows(rs); setIdx(0); setSelected(null); setFrames({}); });
   }, [runId]);
 
@@ -239,7 +240,7 @@ export default function ViewAI({ addToast }) {
     if (!runId || !frameCount) return;
     const want = [idx, idx - 1].filter((k) => k >= 0 && k < frameCount && !cache.current.has(k));
     let live = true;
-    Promise.all(want.map((k) => fetch(`/api/viz/${runId}/frame?index=${k}`).then((r) => r.arrayBuffer()).then((b) => cache.current.set(k, new Float32Array(b)))))
+    Promise.all(want.map((k) => api(`/api/viz/${runId}/frame?index=${k}`).then((r) => r.arrayBuffer()).then((b) => cache.current.set(k, new Float32Array(b)))))
       .then(() => { if (live) setFrames({ cur: cache.current.get(idx), prev: cache.current.get(idx - 1) }); });
     return () => { live = false; };
   }, [runId, idx, frameCount]);

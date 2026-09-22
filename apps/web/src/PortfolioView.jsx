@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { api, apiStream } from './api.js';
 import {
   ArrowRight, CheckCircle2, Download, FileText, Loader2, Play, ShieldCheck, XCircle,
 } from 'lucide-react';
@@ -238,11 +239,11 @@ export default function PortfolioView({ addToast }) {
   // 선택된 실행의 텔레메트리 요약 + 생성된 리포트
   const loadRun = useCallback((rid) => {
     const q = rid ? `?run=${encodeURIComponent(rid)}` : '';
-    fetch(`/api/portfolio/telemetry${q}`)
+    api(`/api/portfolio/telemetry${q}`)
       .then((r) => r.json())
       .then(setTelemetry)
       .catch(() => setError('API 서버에 연결할 수 없습니다. `python -m plaiground_host.api_server`를 실행하세요.'));
-    fetch(`/api/portfolio/data${q}`)
+    api(`/api/portfolio/data${q}`)
       .then((r) => (r.ok ? r.json() : null))
       .then(setReport)
       .catch(() => {});
@@ -250,7 +251,7 @@ export default function PortfolioView({ addToast }) {
 
   // 실행 이력 목록 → 가장 최근 실행을 기본 선택
   const loadRuns = useCallback((prefer) => {
-    fetch('/api/portfolio/runs')
+    api('/api/portfolio/runs')
       .then((r) => r.json())
       .then((list) => {
         setRuns(list);
@@ -275,22 +276,22 @@ export default function PortfolioView({ addToast }) {
     const params = new URLSearchParams();
     if (mode) params.set('mode', mode);
     if (runId && mode !== 'demo') params.set('run', runId);
-    const source = new EventSource(`/api/portfolio/run${params.toString() ? `?${params}` : ''}`);
+    const source = apiStream(`/api/portfolio/run${params.toString() ? `?${params}` : ''}`, (event, data) => {
+      if (event === 'log') {
+        setLogs((prev) => [...prev, JSON.parse(data)]);
+      } else if (event === 'ready') {
+        source.close();
+        const payload = JSON.parse(data);
+        setPhase('done');
+        loadRuns(payload.run_id || runId);
+        addToast?.('포트폴리오 생성 완료 — 아래에서 결과를 확인하세요.');
+      } else if (event === 'error') {
+        source.close();
+        setError(data ? JSON.parse(data) : '스트림이 끊겼습니다. 서버 로그를 확인하세요.');
+        setPhase('error');
+      }
+    });
     sourceRef.current = source;
-
-    source.addEventListener('log', (e) => setLogs((prev) => [...prev, JSON.parse(e.data)]));
-    source.addEventListener('ready', (e) => {
-      source.close();
-      const payload = JSON.parse(e.data);
-      setPhase('done');
-      loadRuns(payload.run_id || runId);
-      addToast?.('포트폴리오 생성 완료 — 아래에서 결과를 확인하세요.');
-    });
-    source.addEventListener('error', (e) => {
-      source.close();
-      setError(e.data ? JSON.parse(e.data) : '스트림이 끊겼습니다. 서버 로그를 확인하세요.');
-      setPhase('error');
-    });
   }, [addToast, runId, loadRuns]);
 
   const running = phase === 'running';

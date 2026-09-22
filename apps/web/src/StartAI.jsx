@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { api, apiStream } from './api.js';
 import {
   AlertTriangle, ArrowRight, CheckCircle2, ExternalLink, Loader2, Play, Search, X, XCircle,
 } from 'lucide-react';
@@ -91,8 +92,8 @@ export default function StartAI({ go, onSession, addToast }) {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/status').then((r) => r.json()),
-      fetch('/api/models').then((r) => r.json()),
+      api('/api/status').then((r) => r.json()),
+      api('/api/models').then((r) => r.json()),
     ])
       .then(([s, m]) => {
         setStatus(s);
@@ -114,23 +115,23 @@ export default function StartAI({ go, onSession, addToast }) {
     setSession(null);
     setStep(3);
 
-    const source = new EventSource(`/api/setup?model_id=${encodeURIComponent(selected)}`);
+    const source = apiStream(`/api/setup?model_id=${encodeURIComponent(selected)}`, (event, data) => {
+      if (event === 'log') {
+        setLogs((prev) => [...prev, JSON.parse(data)]);
+      } else if (event === 'ready') {
+        source.close();
+        const payload = JSON.parse(data);
+        setSession(payload);
+        onSession?.(payload);
+        setStep(4);
+        addToast?.('환경 세팅 완료 — Web IDE에서 학습을 실행하세요.');
+      } else if (event === 'error') {
+        source.close();
+        setError(data ? JSON.parse(data) : '스트림이 끊겼습니다. 서버 로그를 확인하세요.');
+        setStep(4);
+      }
+    });
     sourceRef.current = source;
-
-    source.addEventListener('log', (e) => setLogs((prev) => [...prev, JSON.parse(e.data)]));
-    source.addEventListener('ready', (e) => {
-      source.close();
-      const payload = JSON.parse(e.data);
-      setSession(payload);
-      onSession?.(payload);
-      setStep(4);
-      addToast?.('환경 세팅 완료 — Web IDE에서 학습을 실행하세요.');
-    });
-    source.addEventListener('error', (e) => {
-      source.close();
-      setError(e.data ? JSON.parse(e.data) : '스트림이 끊겼습니다. 서버 로그를 확인하세요.');
-      setStep(4);
-    });
   }, [selected, onSession, addToast]);
 
   const running = step === 3;

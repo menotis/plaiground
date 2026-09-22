@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { api } from './api.js';
 import {
   AlertCircle, ArrowLeft, Bookmark, Bug, Database, Eye, ExternalLink, FlaskConical,
   Loader2, MessageCircle, MessageCircleQuestion, Play, Search, Send, ThumbsUp, X,
@@ -61,7 +62,7 @@ function PostPage({ post, liked, bookmarked, onToggle, onPractice, practicing, o
 
   useEffect(() => {
     setComments(null);
-    fetch(`/api/community/comments?post_id=${encodeURIComponent(post.id)}`)
+    api(`/api/community/comments?post_id=${encodeURIComponent(post.id)}`)
       .then((r) => r.json())
       .then((d) => setComments(Array.isArray(d) ? d : []))
       .catch(() => setComments([]));
@@ -71,7 +72,7 @@ function PostPage({ post, liked, bookmarked, onToggle, onPractice, practicing, o
     e.preventDefault();
     if (!text.trim() || sending) return;
     setSending(true);
-    fetch('/api/community/comment', {
+    api('/api/community/comment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ post_id: post.id, author, text }),
@@ -246,7 +247,7 @@ export default function Community({ go, postId, onStaged, addToast }) {
   const [practicing, setPracticing] = useState(false);
 
   useEffect(() => {
-    fetch('/api/community/posts')
+    api('/api/community/posts')
       .then((r) => r.json())
       .then(setPosts)
       .catch(() => setError('API 서버에 연결할 수 없습니다. `python -m plaiground_host.api_server`를 실행하세요.'));
@@ -257,7 +258,7 @@ export default function Community({ go, postId, onStaged, addToast }) {
   }, []);
 
   const interact = useCallback((id, action) => {
-    fetch('/api/community/interact', {
+    api('/api/community/interact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ post_id: id, action }),
@@ -286,7 +287,7 @@ export default function Community({ go, postId, onStaged, addToast }) {
 
   const practice = useCallback((post) => {
     setPracticing(true);
-    fetch('/api/community/practice', {
+    api('/api/community/practice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ post_id: post.id }),
