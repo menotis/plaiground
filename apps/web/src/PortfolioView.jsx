@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, apiStream } from './api.js';
+import { api, apiStream, GEMINI_KEY_STORAGE } from './api.js';
 import {
-  ArrowRight, CheckCircle2, Download, FileText, Loader2, Play, ShieldCheck, XCircle,
+  ArrowRight, CheckCircle2, Download, FileText, KeyRound, Loader2, Play, ShieldCheck, XCircle,
 } from 'lucide-react';
 
 // ─── Portfolio — 실제 portfolio_demo 파이프라인 실행 + 네이티브 리포트 ────────
@@ -236,6 +236,30 @@ export default function PortfolioView({ addToast }) {
   const logRef = useRef(null);
   const sourceRef = useRef(null);
 
+  // Gemini BYOK — api.js가 sessionStorage에서 읽어 /api/portfolio/run에만 붙인다
+  const [geminiKey, setGeminiKey] = useState(() => {
+    const saved = sessionStorage.getItem(GEMINI_KEY_STORAGE) ?? localStorage.getItem(GEMINI_KEY_STORAGE) ?? '';
+    if (saved) sessionStorage.setItem(GEMINI_KEY_STORAGE, saved);
+    return saved;
+  });
+  const [rememberKey, setRememberKey] = useState(() => !!localStorage.getItem(GEMINI_KEY_STORAGE));
+
+  const changeGeminiKey = (value) => {
+    setGeminiKey(value);
+    if (value) sessionStorage.setItem(GEMINI_KEY_STORAGE, value);
+    else sessionStorage.removeItem(GEMINI_KEY_STORAGE);
+    if (rememberKey) {
+      if (value) localStorage.setItem(GEMINI_KEY_STORAGE, value);
+      else localStorage.removeItem(GEMINI_KEY_STORAGE);
+    }
+  };
+
+  const toggleRememberKey = (checked) => {
+    setRememberKey(checked);
+    if (checked && geminiKey) localStorage.setItem(GEMINI_KEY_STORAGE, geminiKey);
+    if (!checked) localStorage.removeItem(GEMINI_KEY_STORAGE);
+  };
+
   // 선택된 실행의 텔레메트리 요약 + 생성된 리포트
   const loadRun = useCallback((rid) => {
     const q = rid ? `?run=${encodeURIComponent(rid)}` : '';
@@ -347,6 +371,37 @@ export default function PortfolioView({ addToast }) {
               : <><Play className="w-3.5 h-3.5" /> 포트폴리오 생성 실행</>}
           </button>
         </div>
+      </div>
+
+      {/* Gemini BYOK 키 입력 */}
+      <div className="mt-6 rounded-md border border-line bg-pit/60 p-4 print:hidden">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <KeyRound className="w-4 h-4 text-gold shrink-0" />
+          <input
+            type="password"
+            value={geminiKey}
+            onChange={(e) => changeGeminiKey(e.target.value)}
+            placeholder="Gemini API 키 (AI Studio)"
+            autoComplete="off"
+            aria-label="Gemini API 키"
+            className="flex-1 min-w-55 bg-transparent border border-line rounded-md px-3 py-1.5 text-[13px] font-mono placeholder:text-dim focus:outline-none focus:border-white/30"
+          />
+          <label className="flex items-center gap-1.5 text-[12px] text-mist cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={rememberKey}
+              onChange={(e) => toggleRememberKey(e.target.checked)}
+            />
+            이 브라우저에 기억
+          </label>
+        </div>
+        <p className="mt-2 text-[12px] text-dim leading-relaxed">
+          키는 이 브라우저 탭에만 저장되고 서버에 남지 않습니다. 무료 키를 쓰면 입력 데이터가
+          Google의 모델 개선에 쓰일 수 있습니다.{' '}
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-cobalt hover:underline">
+            키 발급 →
+          </a>
+        </p>
       </div>
 
       {/* 학습 실행 이력 — 모델별로 따로 보관된 텔레메트리 중 하나를 고른다 */}
