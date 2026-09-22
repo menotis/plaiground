@@ -16,7 +16,7 @@ plAI-ground를 로컬 데모에서 실제 배포로 옮기는 작업 공간. 배
 
 ## 현재 위치
 
-Stage B 진행 중. **B1(호스트 리팩터) 코드 완료 (2026-09-22, 브랜치 `stage-b/host-refactor`).** A2 계정은 만들어졌고 저장소는 `menotis/plaiground`로 이전됨. 남은 것: 상협 초대·인터페이스 확정(B0), B2 엣지 층.
+Stage B 진행 중. **B1(호스트 리팩터)과 B2-1(api.js) `main` 병합 완료 (2026-09-22).** 저장소는 `menotis/plaiground`. 남은 것: B0 인터페이스 확정([../docs/interface.md](../docs/interface.md) 초안 있음), B2-2~B2-7 엣지 층, 그 뒤 Stage C. 최근 전달 사항: [handoff_2026-09-22.md](handoff_2026-09-22.md).
 
 ## 앞으로 이 폴더에 생길 것
 
