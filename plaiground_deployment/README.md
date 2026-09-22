@@ -10,11 +10,13 @@ plAI-ground를 로컬 데모에서 실제 배포로 옮기는 작업 공간. 배
 
 [directory_plan.md](directory_plan.md) — 저장소 디렉토리 구조 진단과 목표 구조, 이동 순서. Phase 1 전에 읽는다.
 
+개인별 분담 업무: [assignment_host_junhyung.md](assignment_host_junhyung.md)(GPU 호스트 층, 준형) · [assignment_edge_sanghyup.md](assignment_edge_sanghyup.md)(엣지 층, 상협). 각자 이것만 보고 일해도 되게 썼다.
+
 현재 구현 상태는 [../docs/STATUS.md](../docs/STATUS.md).
 
 ## 현재 위치
 
-Stage A 진행 중. **A1(폴더 이동) 완료** — 브랜치 `restructure/stage-a1`. 남은 것: A1-5 전체 흐름 수동 확인(Docker 필요), A2 계정·조직 만들기.
+Stage A 진행 중. **A1(폴더 이동) 완료, `main`에 병합·푸시됨 (2026-09-21).** 남은 것: A2 계정·조직 만들기, 그 뒤 Stage A 관문 확인.
 
 ## 앞으로 이 폴더에 생길 것
 
@@ -23,7 +25,7 @@ Stage A 진행 중. **A1(폴더 이동) 완료** — 브랜치 `restructure/stag
 | 경로 | 내용 | 만드는 단계 |
 |---|---|---|
 | `supabase/` | 마이그레이션 SQL, RLS 정책, 커뮤니티 시드 | Phase 2 |
-| `cloudflare/` | Pages 설정, Tunnel 설정, Access 정책 메모 | Phase 2~3 |
+| `cloudflare/` | Pages 설정 | Phase 2 |
 | `gpu_host/` | 컨테이너 실행 설정, 리버스 프록시, 강화 옵션 | Phase 3~4 |
 | `docs/` | 약관, 장애 대응 절차 | Phase 5 |
 

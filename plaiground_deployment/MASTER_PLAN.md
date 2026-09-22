@@ -58,7 +58,7 @@ Stage D  (3~4주)   D1 멀티유저 격리 ───────┐
 
 ### 계정 만들기를 병행하는 이유
 
-코드와 의존 관계가 전혀 없다. 게다가 도메인 등록 반영, 초대 메일 수락처럼 **기다리는 시간**이 있어서 일찍 시작할수록 좋다.
+코드와 의존 관계가 전혀 없다. 게다가 가입 인증, 초대 메일 수락처럼 **기다리는 시간**이 있어서 일찍 시작할수록 좋다.
 
 ### "이동 먼저, 변경은 그다음"을 지키는 이유
 
@@ -97,9 +97,11 @@ A1-0을 맨 앞에 둔 이유: 이동 단계마다 GPU와 Docker를 띄워 전�
 
 ### A2. 계정·조직 만들기 · 담당: 같이 · 약 3시간
 
-상세는 [DEPLOYMENT_PLAN.md](DEPLOYMENT_PLAN.md) 2장. 순서만 다시 적는다: Bitwarden → 루트 Gmail → Cloudflare 계정 → 도메인 → Email Routing → GitHub 조직 → Supabase 조직과 프로젝트 2개 → Google OAuth 클라이언트 → R2와 Zero Trust 활성화.
+상세는 [DEPLOYMENT_PLAN.md](DEPLOYMENT_PLAN.md) 2장. **전부 무료이고 카드 등록도 없다.** 순서만 다시 적는다: Bitwarden → 루트 Gmail → Cloudflare 계정(Pages용) → GitHub 조직 → Supabase 조직과 dev 프로젝트 → 로그인용 OAuth 앱(GitHub, Google) → Tailscale.
 
-먼저 합의할 것: 도메인 이름, 저장소 이전과 공개 여부, 호스트 층 담당자.
+먼저 합의할 것: 저장소 이전과 공개 여부, 호스트 층 담당자.
+
+도메인, Cloudflare Tunnel·Access, R2는 2026-09-21에 계획에서 뺐다. 이유와 대체 수단, 돈이 필요해지는 시점은 DEPLOYMENT_PLAN 8장.
 
 ### Stage A 관문
 
@@ -107,7 +109,7 @@ A1-0을 맨 앞에 둔 이유: 이동 단계마다 GPU와 Docker를 띄워 전�
 
 - [ ] 이동 전용 커밋들이 `main`에 들어갔고 전체 흐름이 동작한다
 - [ ] 저장소가 GitHub 조직으로 이전되었고 두 사람 모두 새 주소로 원격을 갱신했다
-- [ ] 두 사람 모두 개인 계정으로 GitHub 조직, Cloudflare, Supabase 두 프로젝트에 들어갈 수 있다
+- [ ] 두 사람 모두 개인 계정으로 GitHub 조직, Cloudflare, Supabase 조직, Tailscale tailnet에 들어갈 수 있다
 - [ ] **상협이 새 구조의 저장소를 처음으로 클론한다** (옛 구조를 클론한 적이 있다면 지우고 다시)
 
 ---
@@ -155,6 +157,8 @@ A1-0을 맨 앞에 둔 이유: 이동 단계마다 GPU와 Docker를 띄워 전�
 
 **완료 기준:** 처음 보는 사람이 공개 URL에서 Google로 가입해 댓글을 쓰고, 다른 계정으로는 그 댓글을 고칠 수 없다.
 
+개인별 상세 체크리스트는 [assignment_host_junhyung.md](assignment_host_junhyung.md)와 [assignment_edge_sanghyup.md](assignment_edge_sanghyup.md).
+
 ### 병행 중 충돌을 막는 규칙
 
 - **폴더 소유권.** `apps/host`와 `packages/telemetry`는 호스트 담당만, `apps/web`과 `plaiground_deployment/supabase`는 엣지 담당만 고친다. 상대 폴더를 고쳐야 하면 요청하거나 PR 설명에 명시한다.
@@ -163,15 +167,15 @@ A1-0을 맨 앞에 둔 이유: 이동 단계마다 GPU와 Docker를 띄워 전�
 
 ---
 
-## 4. Stage C — 터널로 공개 (1주)
+## 4. Stage C — Tailscale로 연결해 시연 (1주)
 
 배포 계획 Phase 3. B1과 B2가 **둘 다** 끝나야 시작한다. 상세는 [DEPLOYMENT_PLAN.md](DEPLOYMENT_PLAN.md) 3장 Phase 3.
 
-시작 전에 확인할 설계 항목이 하나 있다. 원래 계획은 API(`api.도메인`)와 IDE(`ide.도메인`)를 모두 Cloudflare Access 뒤에 두는 것이었다. 그런데 Access는 **호스트 이름별 쿠키**로 인증하므로, 다른 주소에 있는 SPA가 Access 뒤의 API를 `fetch`로 부르면 사전 요청(CORS preflight)과 쿠키 문제로 막힐 가능성이 높다. 직접 시험해 보지는 못했으므로 Stage C 첫날에 확인한다. 권장하는 대안은 다음과 같다.
+도메인 없이 0원으로 가기 위해 Cloudflare Tunnel·Access 대신 Tailscale을 쓴다. 호스트 PC의 API와 IDE를 tailnet 안에만 HTTPS로 열어 두 사람의 노트북에서 접속한다. 인터넷에는 노출되지 않는다.
 
-- **IDE만 Access 뒤에 둔다.** IDE는 브라우저가 직접 여는 페이지라 Access와 잘 맞는다.
-- **API는 호스트가 직접 검증하는 Supabase JWT로 막는다.** B1-5에서 만든 훅이 이 역할을 한다.
-- **API를 SPA와 같은 주소 아래로 둔다.** 작은 Cloudflare Worker가 `도메인/api/*`를 터널로 넘겨주면 브라우저 입장에서 같은 출처가 되어 CORS 설정이 필요 없고, 프론트의 상대 경로 `/api/...`도 그대로 쓸 수 있다.
+- **SPA와 API의 주소가 다르다.** `pages.dev`와 `ts.net`이므로 B1-1의 허용 오리진 설정에 Pages 주소를 넣는다.
+- **첫날 확인할 것.** 공개 사이트에서 사설 대역 주소를 호출할 때 크롬이 로컬 네트워크 접근 허용을 물을 수 있다. 직접 시험해 보지 못했다. 막히면 API만 Tailscale Funnel(공개 주소)로 바꾸고 B1-5의 JWT 검증에 맡긴다.
+- **외부 사용자는 이 단계의 대상이 아니다.** Tailscale 무료 플랜은 비상업적 용도 한정이다. 파일럿 학생을 받는 시점에 도메인(연 1~2만 원대)을 사서 Cloudflare Tunnel로 바꾼다. 그때 고칠 코드는 없고 설정값만 바뀐다.
 
 **완료 기준:** 상협이 자기 노트북에서 로그인부터 본인 Gemini 키로 포트폴리오 생성까지 마치고, 그 뒤 준형의 PC를 꺼도 포트폴리오가 열린다.
 
@@ -179,8 +183,8 @@ A1-0을 맨 앞에 둔 이유: 이동 단계마다 GPU와 Docker를 띄워 전�
 
 ## 5. Stage D — 실사용 준비 (3~4주)
 
-- **D1. 멀티유저 격리** · 호스트 담당 · 배포 계획 Phase 4. 리눅스 GPU 호스트, 사용자별 컨테이너, 이그레스 제한, 서버 서명.
-- **D2. 파일럿 운영 준비** · 엣지 담당 · 배포 계획 Phase 5. 약관, 백업, 가동 확인, 지출 상한.
+- **D1. 멀티유저 격리** · 호스트 담당 · 배포 계획 Phase 4. 사용자별 컨테이너, 이그레스 제한, 서버 서명. 개발과 검증은 준형의 PC에서 0원으로 한다.
+- **D2. 파일럿 운영 준비** · 엣지 담당 · 배포 계획 Phase 5. 약관, 백업, 가동 확인, 유료 전환 점검.
 
 **완료 기준:** [DEPLOYMENT_PLAN.md](DEPLOYMENT_PLAN.md) 6장의 보안 점검표를 두 사람이 같이 돌려 전부 실패함을 확인한다.
 
@@ -202,5 +206,5 @@ Stage D와 별개로, [STATUS.md](../docs/STATUS.md)에 남아 있는 기능 작
 
 ## 7. 지금 할 일
 
-1. 상협에게 이 문서를 보내고 첫 회의를 잡는다. 안건은 도메인 이름, 저장소 이전과 공개 여부, 호스트 층 담당자.
-2. 회의 전에 준형이 A1(폴더 이동)을 시작한다. 회의 결과와 무관하게 필요한 작업이다. 단, `web_demo/` 삭제 여부와 파이썬 패키지 이름(`plaiground_host`, `plaiground_telemetry`)은 시작 전에 정한다.
+1. 준형이 A2의 계정 만들기를 혼자 할 수 있는 데까지 진행한다: Bitwarden → 루트 Gmail → Cloudflare → GitHub 조직 → Supabase → OAuth 앱 → Tailscale.
+2. 상협과 첫 회의. 안건은 저장소 이전과 공개 여부, 호스트 층 담당자, 인터페이스 초안, Pages 프로젝트 이름. 회의 자리에서 상협을 각 서비스에 초대한다.
