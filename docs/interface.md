@@ -1,6 +1,6 @@
 # 두 층 사이의 인터페이스
 
-작성일: 2026-09-22 · 상태: **초안(호스트 층 구현 기준). B0 회의에서 확정한다.**
+작성일: 2026-09-22 · 상태: **확정 (2026-09-22).** 바꾸려면 이 문서를 고치는 PR을 올린다. 결정 근거는 [decisions.md](../plaiground_deployment/decisions.md).
 
 프론트(`apps/web`, 상협)와 GPU 호스트(`apps/host`, 준형)가 만나는 지점 전부. 여기 없는 것을 상대 폴더에서 고치지 않는다. 바꾸고 싶으면 이 문서를 먼저 고치고 PR 설명에 링크한다.
 
@@ -36,9 +36,16 @@
 
 **프론트에 요청 (선택):** 응답이 `!res.ok`일 때 본문 JSON의 `error`를 `onEvent('error', body)`로 넘겨 주면 "잘못된 model_id", "로그인이 필요합니다" 같은 서버 메시지가 화면에 보인다. 지금은 `undefined`라 일반 문구만 뜬다. EventSource 시절과 같은 동작이라 급하지 않다.
 
-## 4. Supabase 테이블 (초안, 상협 확정)
+## 4. Supabase 테이블 (확정)
 
-`profiles`, `posts`, `comments`, `post_interactions`, `runs`, `portfolios`. 컬럼·RLS는 [assignment_edge_sanghyup.md](../plaiground_deployment/assignment_edge_sanghyup.md) 3장. 호스트는 Stage C에서 `runs`, `portfolios`에 `service_role`로 쓴다. `portfolios.data`(jsonb)의 내용은 `/api/portfolio/data`가 지금 돌려주는 JSON과 같다.
+스키마의 원본은 [`plaiground_deployment/supabase/migrations/0001_init.sql`](../plaiground_deployment/supabase/migrations/0001_init.sql). 호스트가 Stage C에서 `service_role`로 쓰는 두 테이블:
+
+| 테이블 | 호스트가 채우는 컬럼 | 출처 |
+|---|---|---|
+| `runs` | `run_id, user_id, model_id, script, project_name, base_model, status, error_count, saved_at` | `runs/<run_id>.json` (FORMAT.md) |
+| `portfolios` | `run_id, user_id, data, integrity_hash` | `data` = `/api/portfolio/data` JSON 그대로, `integrity_hash` = `data.verification.integrity_hash` |
+
+역할은 `student`/`faculty`/`admin`. 첫 admin은 준형, faculty 지정은 admin이 `rpc('set_role', {target, new_role})`.
 
 ## 5. 호스트 환경변수 (참고)
 

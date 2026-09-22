@@ -34,5 +34,5 @@ python -m plaiground_host.server                 # 서버, http://127.0.0.1:8770
 ## 커밋
 
 - 파일 이동과 로직 변경을 한 커밋에 섞지 않는다.
-- `main`에 직접 푸시하지 않는다. 브랜치를 만들고 PR로 올린다.
+- `main`에 직접 푸시하지 않는다. 브랜치를 만들고 PR로 올린다. 규칙 전체는 [CONTRIBUTING.md](CONTRIBUTING.md).
 - 배포 전환 작업 중에는 폴더 소유권이 있다. 담당과 순서는 [plaiground_deployment/MASTER_PLAN.md](plaiground_deployment/MASTER_PLAN.md).

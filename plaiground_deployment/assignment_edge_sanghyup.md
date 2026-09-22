@@ -1,6 +1,6 @@
 # 분담 업무 계획서 — 엣지 층 (한상협)
 
-갱신: 2026-09-22 (2판) · 기준: [MASTER_PLAN.md](MASTER_PLAN.md) Stage B~C · 짝 문서: [assignment_host_junhyung.md](assignment_host_junhyung.md)
+갱신: 2026-09-22 (3판 — 스키마 확정, 협업 규칙은 [../CONTRIBUTING.md](../CONTRIBUTING.md)) · 기준: [MASTER_PLAN.md](MASTER_PLAN.md) Stage B~C · 짝 문서: [assignment_host_junhyung.md](assignment_host_junhyung.md)
 
 ## 0. 현재 위치
 
@@ -48,7 +48,7 @@ B2 작업은 GPU도 Docker도 필요 없다. 커뮤니티·로그인·Pages는 �
 
 ## 2. 규칙
 
-- 브랜치 이름은 작업 번호로: `feat/b2-2-schema`, `feat/b2-3-seed` … PR 하나에 작업 하나.
+- 협업 규칙 전체는 [../CONTRIBUTING.md](../CONTRIBUTING.md). 요약: 브랜치 `feat/b2-2-schema` 식, PR 하나에 작업 하나, 상대 리뷰 후 작성자가 Squash merge, `gh` CLI 사용.
 - 새 npm 의존성은 `@supabase/supabase-js` 하나만.
 - 프론트에는 Supabase **`anon` 키만**. `service_role` 키는 어디에도 넣지 않는다.
 - `.env`, `.env.local`, `.dev.vars`는 커밋하지 않는다. `.env.example`에 변수 이름만.
@@ -70,9 +70,11 @@ B2 작업은 GPU도 Docker도 필요 없다. 커뮤니티·로그인·Pages는 �
 
 ## 4. 작업 순서와 상세
 
-### B2-2 — 스키마와 RLS (반나절)
+### B2-2 — 스키마와 RLS (1시간, SQL은 준비됨)
 
-1. `plaiground_deployment/supabase/migrations/0001_init.sql`을 만든다. 3장을 SQL로 옮긴 초안:
+**SQL 파일이 이미 있다:** `plaiground_deployment/supabase/migrations/0001_init.sql`, `0002_roles.sql`. 적용 절차는 [supabase/README.md](supabase/README.md). 아래 초안은 참고용이며 파일이 원본이다.
+
+1. ~~SQL 작성~~ → 파일을 SQL Editor에 붙여 실행. 초안:
 
 ```sql
 create table profiles (
@@ -159,7 +161,7 @@ create policy "portfolios read own or faculty" on portfolios for select
 ### B2-3 — 글 40건 시드 (2시간)
 
 1. `plaiground_deployment/supabase/seed_posts.py`: `from plaiground_host.community.posts import POSTS`로 읽어 `insert into posts (...) values (...)` SQL을 출력한다. `'`는 `''`로, `tags`는 `array['a','b']`. `likes/views/bookmarks`는 가상 숫자라 옮기지 않는다.
-2. `python plaiground_deployment/supabase/seed_posts.py > plaiground_deployment/supabase/migrations/0002_seed_posts.sql`
+2. `python plaiground_deployment/supabase/seed_posts.py > plaiground_deployment/supabase/migrations/0003_seed_posts.sql`
 3. SQL Editor에서 실행. `select category, count(*) from posts group by 1` → 4개 카테고리 각 10.
 4. 스크립트와 생성된 SQL 둘 다 커밋.
 

@@ -12,7 +12,11 @@ plAI-ground를 로컬 데모에서 실제 배포로 옮기는 작업 공간. 배
 
 개인별 분담 업무: [assignment_host_junhyung.md](assignment_host_junhyung.md)(GPU 호스트 층, 준형) · [assignment_edge_sanghyup.md](assignment_edge_sanghyup.md)(엣지 층, 상협). 각자 이것만 보고 일해도 되게 썼다.
 
-[meeting_B0_agenda.md](meeting_B0_agenda.md) — 첫 회의(B0) 안건과 결정할 것.
+[decisions.md](decisions.md) — 결정 기록. 회의 대신 여기서 확정한다.
+
+[supabase/](supabase/) — 확정 스키마(`migrations/`)와 적용 절차.
+
+[meeting_B0_agenda.md](meeting_B0_agenda.md) — B0 안건. 대부분 문서로 결정됨, 초대 확인과 시연 날짜만 남음.
 
 [laptop_and_tailscale.md](laptop_and_tailscale.md) — 노트북에서 로컬로 실행하는 절차와 Tailscale로 호스트에 접속하는 절차(Stage C).
 
@@ -20,7 +24,7 @@ plAI-ground를 로컬 데모에서 실제 배포로 옮기는 작업 공간. 배
 
 ## 현재 위치
 
-Stage B 진행 중. **B1(호스트 리팩터)과 B2-1(api.js) `main` 병합 완료 (2026-09-22).** 저장소는 `menotis/plaiground`. 남은 것: B0 인터페이스 확정([../docs/interface.md](../docs/interface.md) 초안 있음), B2-2~B2-7 엣지 층, 그 뒤 Stage C. 최근 전달 사항: [handoff_2026-09-22.md](handoff_2026-09-22.md).
+Stage B 진행 중. **B1(호스트 리팩터)과 B2-1(api.js) `main` 병합 완료 (2026-09-22).** 저장소는 `menotis/plaiground`. B0(인터페이스·스키마·규칙)은 문서로 확정됨. 남은 것: 상협 B2-2~B2-7, 그 뒤 Stage C. 최근 전달 사항: [handoff_2026-09-22.md](handoff_2026-09-22.md).
 
 ## 앞으로 이 폴더에 생길 것
 
