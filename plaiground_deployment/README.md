@@ -24,7 +24,7 @@ plAI-ground를 로컬 데모에서 실제 배포로 옮기는 작업 공간. 배
 
 ## 현재 위치
 
-Stage B 진행 중. **B1(호스트 리팩터)과 B2-1(api.js) `main` 병합 완료 (2026-09-22).** 저장소는 `menotis/plaiground`. B0(인터페이스·스키마·규칙)은 문서로 확정됨. 남은 것: 상협 B2-2~B2-7, 그 뒤 Stage C. 최근 전달 사항: [handoff_2026-09-22.md](handoff_2026-09-22.md).
+Stage B 진행 중. **B1(호스트 리팩터)과 B2-1(api.js) `main` 병합 완료 (2026-09-22).** 저장소는 `menotis/plaiground`. B0 확정. **B2-1~B2-4 완료·병합, Google 로그인 로컬 검증 완료 (2026-09-22).** 마이그레이션 0001~0004 적용됨. 남은 것: 상협 B2-5~B2-7, 그 뒤 Stage C. 새 에이전트는 [../docs/HANDOFF.md](../docs/HANDOFF.md)부터. 최근 전달 사항: [handoff_2026-09-22.md](handoff_2026-09-22.md).
 
 ## 앞으로 이 폴더에 생길 것
 
