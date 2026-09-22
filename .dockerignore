@@ -1,0 +1,7 @@
+# 컨테이너 이미지 빌드 컨텍스트 — 저장소 루트에서 빌드하지만 SDK와 이미지 폴더만 보낸다.
+*
+!packages/telemetry
+!apps/host/docker/plaiground-base
+**/__pycache__
+**/*.egg-info
+**/tests

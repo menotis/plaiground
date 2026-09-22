@@ -2,7 +2,7 @@
 # entrypoint.sh — 컨테이너 시작 시 1회 실행.
 #
 # 호출 계약 (LocalDockerAdapter가 `docker run`에 넘겨야 하는 것):
-#   -v <repo_root>:/workspace          레포 전체를 마운트 (portfolio_demo, ai_set_demo 포함)
+#   -v <user_workspace>:/workspace     사용자 워크스페이스만 마운트 (플랫폼 소스·.env 없음)
 #   -e MODEL_REQUIREMENTS_FILE=<path>  (선택) 모델별 추가 pip 패키지 목록 파일 경로
 #   -p 127.0.0.1:<port>:8080           호스트 루프백에만 바인딩 — 절대 0.0.0.0으로 열지 말 것
 #

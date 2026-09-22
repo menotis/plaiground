@@ -13,11 +13,11 @@ import ast
 from pathlib import Path
 from string import Template
 
-from ..paths import GENERATED_DIR
+from ..paths import workspace_dir
 from .catalog import ModelCatalog, ModelSpec
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
-_DEFAULT_OUT_DIR = GENERATED_DIR
+_DEFAULT_OUT_DIR = workspace_dir()
 
 
 def generate(spec: ModelSpec, out_dir: Path = _DEFAULT_OUT_DIR) -> Path:
@@ -29,7 +29,7 @@ def generate(spec: ModelSpec, out_dir: Path = _DEFAULT_OUT_DIR) -> Path:
 
     Args:
         spec: ModelCatalog에서 조회한 ModelSpec.
-        out_dir: 생성 스크립트 출력 디렉터리 (기본 var/generated).
+        out_dir: 생성 스크립트 출력 디렉터리 (기본 로컬 사용자 워크스페이스).
 
     Returns:
         생성된 .py 파일 경로.

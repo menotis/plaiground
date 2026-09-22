@@ -4,7 +4,9 @@
 # 근거: ai_set_demo/DECISION_ENV_PROVISIONING.md 어댑터 D.
 #
 # 여기 안 들어있는 것 (의도적):
-# - portfolio_demo/, ai_set_demo/ 소스 코드: 이미지에 굽지 않는다. `docker run`에서
+# - 텔레메트리 SDK(packages/telemetry)는 이미지에 설치한다. 플랫폼 서버 코드는 이미지에도 마운트에도 없다.
+#   빌드는 저장소 루트에서: docker build -f apps/host/docker/plaiground-base/Dockerfile -t plaiground-base:dev .
+# - (옛 방식) 소스 코드: 이미지에 굽지 않는다. `docker run`에서
 #   레포 루트를 /workspace로 bind mount 한다. 텔레메트리/제너레이터 코드가 계속
 #   바뀌는 단계라, 코드 한 줄 바꿀 때마다 이미지 재빌드하지 않기 위함.
 # - 모델별 라이브러리(transformers 추가옵션 등 세부 버전): entrypoint.sh가 컨테이너
@@ -42,10 +44,19 @@ RUN pip install --no-cache-dir torch torchvision --index-url https://download.py
         pydantic \
         jinja2
 
+# 텔레메트리 SDK — 사용자 컨테이너 안에서 실행되는 유일한 플랫폼 코드. 표준 라이브러리만 의존.
+# 이 레이어는 torch 레이어 뒤에 있어 SDK만 바뀌면 캐시가 살아 재빌드가 수십 초로 끝난다.
+COPY packages/telemetry /tmp/plaiground_telemetry
+# Ubuntu 22.04의 pip 22 / setuptools 59는 pyproject의 [project] 메타데이터를 못 읽어 UNKNOWN-0.0.0 빈 패키지를 만든다.
+RUN pip install --no-cache-dir "pip>=24" "setuptools>=68" \
+    && pip install --no-cache-dir --no-deps /tmp/plaiground_telemetry \
+    && rm -rf /tmp/plaiground_telemetry \
+    && python -c "import plaiground_telemetry.recorder"
+
 WORKDIR /workspace
 EXPOSE 8080
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY apps/host/docker/plaiground-base/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

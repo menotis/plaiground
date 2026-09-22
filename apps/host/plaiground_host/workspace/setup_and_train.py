@@ -21,18 +21,18 @@ from collections.abc import Iterator
 from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
-from ..paths import GENERATED_DIR, REPO_ROOT
+from .. import settings
+from ..paths import DEFAULT_USER, workspace_dir
 from .catalog import ModelCatalog
 from .generator import generate
 from .provisioner import ensure_ready
 
-_REPO_ROOT = REPO_ROOT
 _ANSI = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
 
 
-def _container_path(host_path: Path) -> str:
-    """레포 루트 기준 호스트 경로를 컨테이너 안 /workspace 경로로 변환."""
-    return f"/workspace/{host_path.resolve().relative_to(_REPO_ROOT).as_posix()}"
+def _container_path(host_path: Path, workspace: Path) -> str:
+    """워크스페이스 기준 호스트 경로를 컨테이너 안 /workspace 경로로 변환."""
+    return f"/workspace/{host_path.resolve().relative_to(workspace.resolve()).as_posix()}"
 
 
 def _clean(line: str) -> str:
@@ -48,7 +48,7 @@ def _ide_url(base_url: str, script_container_path: str) -> str:
     return f"{base_url}/?folder={quote(folder)}&payload={quote(payload)}"
 
 
-def provision(model_id: str, host_port: int = 8080) -> Iterator[str]:
+def provision(model_id: str, host_port: int = 8080, user: str = DEFAULT_USER) -> Iterator[str]:
     """
     환경 세팅과 스크립트 생성까지만 수행한다 (학습은 하지 않는다).
 
@@ -63,26 +63,34 @@ def provision(model_id: str, host_port: int = 8080) -> Iterator[str]:
     yield f"[1/3] 모델: {spec.model_id} ({spec.task_type}, base={spec.base_model})"
     yield "[2/3] 컨테이너 준비 중 (이미지 확인 · GPU 감지 · 모델별 패키지 설치)..."
 
-    report = ensure_ready(spec, host_port=host_port)
+    workspace = workspace_dir(user)
+    workspace.mkdir(parents=True, exist_ok=True)
+    report = ensure_ready(spec, host_port=host_port, workspace=workspace)
     for warning in report.warnings:
         yield f"  경고: {warning}"
     gpu = "GPU 사용" if report.gpu_available else "CPU 전용"
     yield f"      환경 준비 완료 ({gpu})"
 
-    script = generate(spec)
-    container_path = _container_path(script)
-    yield f"[3/3] 학습 스크립트 생성: {script.name}"
-    yield f"      웹 IDE에서 열기: {report.url}"
+    existing = workspace / f"train_{spec.model_id.replace('-', '_')}.py"
+    if existing.exists():
+        # 학생이 고친 스크립트를 재세팅이 템플릿으로 되돌리면 안 된다 — 수정 이력이 곧 포트폴리오다.
+        script = existing
+        yield f"[3/3] 기존 학습 스크립트 유지: {script.name} (새로 받으려면 파일을 지우고 다시 세팅)"
+    else:
+        script = generate(spec, out_dir=workspace)
+        yield f"[3/3] 학습 스크립트 생성: {script.name}"
+    container_path = _container_path(script, workspace)
+    yield f"      웹 IDE에서 열기: {settings.IDE_URL}"
 
     return {
         "model_id": spec.model_id,
         "gpu_available": report.gpu_available,
         "container_id": report.container_id,
-        "base_url": report.url,
-        "ide_url": _ide_url(report.url, container_path),
+        "base_url": settings.IDE_URL,
+        "ide_url": _ide_url(settings.IDE_URL, container_path),
         "script_name": script.name,
         "script_path": container_path,
-        # PYTHONPATH는 컨테이너에 이미 박혀 있으므로 경로만 주면 실행된다.
+        # SDK는 이미지에 설치되어 있으므로 파일 이름만 주면 실행된다.
         "run_command": f"python {container_path.removeprefix('/workspace/')}",
     }
 
@@ -118,10 +126,10 @@ def run_pipeline(model_id: str, host_port: int = 8080) -> Iterator[str]:
     if proc.wait() != 0:
         raise RuntimeError(
             f"학습 실패 (exit {proc.returncode}). "
-            f"에러는 var/telemetry/last_error.json에 기록되어 있습니다."
+            f"에러는 워크스페이스의 .telemetry/last_error.json에 기록되어 있습니다."
         )
 
-    yield "완료. 텔레메트리: var/telemetry/raw_telemetry.json"
+    yield "완료. 텔레메트리: 워크스페이스의 .telemetry/raw_telemetry.json"
     yield f"웹 IDE는 계속 떠 있습니다: {setup['base_url']}"
     yield "컨테이너 정리: docker rm -f plaiground-workspace"
 
@@ -168,14 +176,14 @@ def main() -> None:
 
 def demo() -> None:
     # Docker 없이 검증 가능한 부분: 경로 변환과 카탈로그 연결.
-    script = GENERATED_DIR / "train_mnist_cnn_lite.py"  # 생성은 하지 않는다 — 사용자가 고친 스크립트 보호
-    assert _container_path(script) == "/workspace/var/generated/train_mnist_cnn_lite.py"
+    ws = workspace_dir()
+    assert _container_path(ws / "train_mnist_cnn_lite.py", ws) == "/workspace/train_mnist_cnn_lite.py"
     # tqdm이 \r로 덮어쓴 진행바는 마지막 상태만, ANSI 색상코드는 제거.
     assert _clean("10%|=   | 1/10\r100%|====| 10/10\n") == "100%|====| 10/10"
     assert _clean("\x1b[1mBOLD\x1b[0m\n") == "BOLD"
     # IDE URL은 스크립트가 든 폴더를 열고 그 파일을 바로 띄워야 한다.
-    url = _ide_url("http://127.0.0.1:8080", "/workspace/var/generated/train_x.py")
-    assert "folder=/workspace/var/generated" in url, url
+    url = _ide_url("http://127.0.0.1:8080", "/workspace/train_x.py")
+    assert "folder=/workspace" in url, url
     assert "openFile" in url and "train_x.py" in url, url
     try:
         setup_and_train("no-such-model")

@@ -12,11 +12,11 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
-from ...paths import OUTPUT_DIR
+from ...paths import portfolio_dir
 from ..core.schema import PortfolioSchema
 
 _TEMPLATE_DIR = Path(__file__).parent.parent / "templates"
-_OUTPUT_DIR = OUTPUT_DIR  # 실행별 포트폴리오 보관
+_OUTPUT_DIR = portfolio_dir()  # 사용자별·실행별 포트폴리오 보관 (PLAIGROUND_USER)
 _OUTPUT_FILE = _OUTPUT_DIR / "portfolio_output.html"
 _OUTPUT_JSON = _OUTPUT_DIR / "portfolio_output.json"
 
