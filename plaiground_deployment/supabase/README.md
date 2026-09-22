@@ -9,8 +9,9 @@ Supabase CLI 없이 대시보드 SQL Editor에서 한다. 파일 하나를 통�
 | 순서 | 파일 | 언제 |
 |---|---|---|
 | 1 | `migrations/0001_init.sql` | B2-2. 테이블 6개, RLS, 트리거, 뷰 |
-| 2 | `migrations/0002_roles.sql` | B2-2. `set_role` 함수. 마지막 `update`는 준형이 첫 로그인을 한 뒤 이메일을 바꿔 실행 |
+| 2 | `migrations/0002_roles.sql` | B2-2. `set_role` 함수. 마지막 `update`는 준형이 첫 로그인을 한 뒤, **0004 실행 후** 이메일을 바꿔 실행 |
 | 3 | `migrations/0003_seed_posts.sql` | B2-3. `seed_posts.py`가 생성 |
+| 4 | `migrations/0004_fix_protect_role.sql` | 첫 admin 지정 전에. 대시보드에서 role 을 바꿀 수 있게 트리거 조건 수정 |
 
 한 번 실행한 파일은 고치지 않는다. 바꿀 것이 있으면 `0004_...sql`을 새로 만든다. 이렇게 하면 dev에서 실행한 순서를 prod에서 그대로 재현할 수 있다.
 
