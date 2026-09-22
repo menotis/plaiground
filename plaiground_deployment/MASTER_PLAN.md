@@ -148,7 +148,7 @@ A1-0을 맨 앞에 둔 이유: 이동 단계마다 GPU와 Docker를 띄워 전�
 
 | 순서 | 작업 |
 |---|---|
-| B2-1 | ~~`api.js` 도입, 호출부 17곳 교체, SSE를 `fetch` 스트리밍으로~~ **완료, `main` 병합 (2026-09-22)**. 다음: `buildHeaders`에 `Authorization`·`X-Gemini-Key` |
+| B2-1 | ~~`api.js` 도입, 호출부 17곳 교체, SSE를 `fetch` 스트리밍으로~~ **완료, `main` 병합 (2026-09-22)**. 헤더 자리(`feat/api-headers`)도 병합됨 |
 | B2-2 | Supabase 스키마, RLS 정책, 커뮤니티 글 40건 시드 (`plaiground_deployment/supabase/`) |
 | B2-3 | Google 로그인, `profiles.role`로 관리자·교수 역할 |
 | B2-4 | 커뮤니티 호출 4개를 Supabase 직접 호출로 교체 |
