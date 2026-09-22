@@ -38,13 +38,15 @@ print("[python]")
 
 @check("경로 상수")
 def _():
-    from plaiground_host import paths
+    from plaiground_host import paths, settings
     from plaiground_telemetry.paths import TELEMETRY_DIR
 
     assert paths.REPO_ROOT == ROOT, paths.REPO_ROOT
-    assert paths.TELEMETRY_DIR == TELEMETRY_DIR, "호스트와 SDK의 텔레메트리 위치가 다름"
+    assert paths.telemetry_dir("local") == TELEMETRY_DIR, "호스트와 SDK의 로컬 텔레메트리 위치가 다름"
+    assert paths.safe_name("../x") is None and paths.safe_name("a/b") is None and paths.safe_name(".hidden") is None
+    assert paths.safe_name("mnist_cnn_lite_20260921-061402")
     assert (ROOT / "apps" / "web" / "package.json").is_file()
-    return f"var={paths.VAR_DIR.relative_to(ROOT)}"
+    return f"var={paths.VAR_DIR.relative_to(ROOT)}, auth={settings.AUTH}"
 
 
 @check("모델 카탈로그")
@@ -74,11 +76,12 @@ def _():
 
 @check("컨테이너 경로 변환")
 def _():
-    from plaiground_host.paths import GENERATED_DIR
+    from plaiground_host.paths import workspace_dir
     from plaiground_host.workspace.setup_and_train import _clean, _container_path, _ide_url
 
-    assert _container_path(GENERATED_DIR / "train_x.py") == "/workspace/var/generated/train_x.py"
-    assert "folder=/workspace/var/generated" in _ide_url("http://127.0.0.1:8080", "/workspace/var/generated/train_x.py")
+    ws = workspace_dir("u1")
+    assert _container_path(ws / "train_x.py", ws) == "/workspace/train_x.py"
+    assert "folder=/workspace" in _ide_url("http://127.0.0.1:8080", "/workspace/train_x.py")
     assert _clean("10%|=   | 1/10\r100%|====| 10/10\n") == "100%|====| 10/10"
 
 
@@ -95,31 +98,34 @@ def _():
 
     posts = list_posts()
     assert len(posts) == 40, len(posts)
-    assert all("var/generated/" in p["practice_command"] for p in posts if p.get("practice_command"))
+    assert all(p["practice_command"].startswith("python ") and "/" not in p["practice_command"] for p in posts if p.get("practice_command"))
     return "40 posts"
 
 
-@check("API 서버: 실행 목록·시각화·경로 검증")
+@check("서버 모듈: 라우팅 표·실행 목록·시각화·경로 검증")
 def _():
-    from plaiground_host import api_server as combined
-    from plaiground_host.workspace import api_server as base
+    from plaiground_host import server, viz
+    from plaiground_host.portfolio import api as portfolio
 
-    runs = combined._list_runs()
-    summary = combined._telemetry_summary(runs[0]["run_id"] if runs else "")
-    assert "exists" in summary
-    assert base._viz_run_dir("../secret") is None and base._viz_run_dir("a/b") is None
-    viz = base._viz_runs()
-    if viz:
-        run_dir = base._viz_run_dir(viz[0]["run_id"])
-        schema = base._viz_schema(run_dir)
-        frame = base._viz_frame(run_dir, 0)
-        assert frame is not None and len(frame) == schema["frame_numel"] * 4
-    return f"runs={len(runs)}, viz_runs={len(viz)}"
+    for (method, pat), name in server.Handler.ROUTES.items():
+        assert method in ("GET", "POST") and callable(getattr(server.Handler, name)), name
+    runs = portfolio.list_runs()
+    assert "exists" in portfolio.telemetry_summary(runs[0]["run_id"] if runs else "")
+    assert portfolio.telemetry_path("../x") is None and portfolio.output_path("a/b", "json") is None
+    assert viz.run_dir("../secret") is None and viz.run_dir("a/b") is None
+    vruns = viz.runs()
+    if vruns:
+        d = viz.run_dir(vruns[0]["run_id"])
+        assert len(viz.frame(d, 0)) == viz.schema(d)["frame_numel"] * 4
+    argv, env, _, _ = portfolio.pipeline("", "", "u1", gemini_key="k")
+    assert env["GEMINI_API_KEY"] == "k" and "k" not in " ".join(argv) and env["PLAIGROUND_USER"] == "u1"
+    return f"routes={len(server.Handler.ROUTES)}, runs={len(runs)}, viz_runs={len(vruns)}"
 
 
 @check("포트폴리오 모듈 import")
 def _():
     import plaiground_host.portfolio.generate_real_portfolio  # noqa: F401
+    from plaiground_host import auth  # noqa: F401
     from plaiground_host.portfolio.services import renderer
 
     assert renderer._TEMPLATE_DIR.joinpath("portfolio_template.html").is_file()
