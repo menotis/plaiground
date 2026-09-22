@@ -4,15 +4,40 @@
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
-function buildHeaders(extra) {
-  // 인증(Authorization)·Gemini 키 헤더는 이후 단계에서 여기에만 추가한다.
-  return { ...extra };
+// Supabase 세션 토큰 공급자. B2-4(로그인)에서 실제 세션을 돌려주도록 교체한다.
+// null을 돌려주면 Authorization 헤더를 생략한다(로컬 서버는 헤더를 무시).
+let getAccessToken = () => null;
+export function setAccessTokenGetter(fn) {
+  getAccessToken = fn;
+}
+
+// 포트폴리오 화면의 키 입력 칸이 이 키 이름으로 sessionStorage에 저장한다.
+export const GEMINI_KEY_STORAGE = 'plaiground.gemini_key';
+
+function readGeminiKey() {
+  try {
+    return sessionStorage.getItem(GEMINI_KEY_STORAGE);
+  } catch {
+    return null;
+  }
+}
+
+function buildHeaders(path, extra) {
+  const headers = { ...extra };
+  const token = getAccessToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  // X-Gemini-Key는 /api/portfolio/run에만 붙인다 (/api/portfolio/runs와 혼동 주의).
+  if (path.split('?')[0] === '/api/portfolio/run') {
+    const key = readGeminiKey();
+    if (key) headers['X-Gemini-Key'] = key;
+  }
+  return headers;
 }
 
 export function api(path, options = {}) {
   return fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: buildHeaders(options.headers),
+    headers: buildHeaders(path, options.headers),
   });
 }
 
@@ -29,7 +54,18 @@ export function apiStream(path, onEvent) {
         headers: { Accept: 'text/event-stream' },
         signal: controller.signal,
       });
-      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        // 스트림 전에 돌아온 400/401 JSON — 본문의 error를 SSE data와 같은
+        // 형식(JSON 문자열)으로 넘겨서 호출부의 JSON.parse가 그대로 동작한다.
+        let msg;
+        try {
+          const body = await res.json();
+          if (typeof body?.error === 'string') msg = body.error;
+        } catch { /* JSON 아님 — 일반 오류로 처리 */ }
+        if (!closed) onEvent('error', msg ? JSON.stringify(msg) : undefined);
+        return;
+      }
+      if (!res.body) throw new Error('빈 응답');
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
