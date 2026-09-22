@@ -3,8 +3,8 @@
 service.py — 커뮤니티 상호작용 상태와 '실습해보기' 스테이징.
 
 - 글 원본은 posts.py(시드). 추천/조회/즐겨찾기 델타는 state.json에 쌓아 merge한다.
-- stage_practice()는 글의 실습 코드를 var/generated/에 실제 파일로 저장한다.
-  컨테이너가 /workspace에 이 저장소를 마운트하므로 Web IDE 터미널에서 바로 실행된다.
+- stage_practice()는 글의 실습 코드를 사용자 워크스페이스에 실제 파일로 저장한다.
+  그 폴더가 컨테이너의 /workspace이므로 Web IDE 터미널에서 바로 실행된다.
 
 ponytail: 파일 잠금 없음(로컬 데모, 사용자 1명). 동시성 필요해지면 sqlite로.
 """
@@ -13,12 +13,11 @@ import json
 import threading
 from pathlib import Path
 
-from ..paths import COMMUNITY_DIR, GENERATED_DIR, REPO_ROOT
+from ..paths import COMMUNITY_DIR, DEFAULT_USER, workspace_dir
 from .posts import POSTS
 
 COMMUNITY_DIR.mkdir(parents=True, exist_ok=True)
 _STATE_FILE = COMMUNITY_DIR / "state.json"
-_GENERATED_DIR = GENERATED_DIR
 _LOCK = threading.Lock()  # ThreadingHTTPServer 워커 간 state.json 쓰기 보호
 
 _ACTIONS = {"view": ("views", 1), "like": ("likes", 1), "unlike": ("likes", -1),
@@ -65,7 +64,7 @@ def list_posts() -> list[dict]:
         delta = state.get(p["id"], {})
         item = {**p, "practice_available": bool(p["practice"])}
         if p["practice"]:
-            item["practice_command"] = f"python var/generated/{p['practice']['filename']}"
+            item["practice_command"] = f"python {p['practice']['filename']}"
         item.pop("practice")  # 코드 본문은 목록 응답에서 제외 (스테이징 시점에 사용)
         for key in ("views", "likes", "bookmarks"):
             item[key] = p[key] + delta.get(key, 0)
@@ -118,21 +117,22 @@ def add_comment(post_id: str, author: str, text: str) -> list[dict]:
     return list_comments(post_id)
 
 
-def stage_practice(post_id: str) -> dict:
-    """글의 실습 코드를 generated/에 저장하고 IDE 실행 정보를 돌려준다."""
+def stage_practice(post_id: str, user: str = DEFAULT_USER) -> dict:
+    """글의 실습 코드를 사용자 워크스페이스에 저장하고 IDE 실행 정보를 돌려준다."""
     post = _BY_ID.get(post_id)
     if post is None:
         raise KeyError(f"존재하지 않는 글: {post_id}")
     practice = post["practice"]
     if not practice:
         raise ValueError("이 글에는 실습 코드가 없습니다.")
-    _GENERATED_DIR.mkdir(parents=True, exist_ok=True)
-    target = _GENERATED_DIR / practice["filename"]
+    ws = workspace_dir(user)
+    ws.mkdir(parents=True, exist_ok=True)
+    target = ws / practice["filename"]
     header = f'# 출처: plAI-ground 커뮤니티 "{post["title"]}" ({post["id"]})\n'
     if post.get("source"):
         header += f'# 참고: {post["source"]["name"]} — {post["source"]["url"]}\n'
     target.write_text(header + "\n" + practice["code"], encoding="utf-8")
-    rel = f"var/generated/{practice['filename']}"
+    rel = practice['filename']  # 컨테이너 /workspace 기준
     return {
         "post_id": post_id,
         "title": post["title"],
@@ -148,7 +148,7 @@ def demo() -> None:
     after = interact("err-001", "view")
     assert after["views"] == before["views"] + 1
     staged = stage_practice("res-002")
-    assert (REPO_ROOT / staged["script_path"]).exists()
+    assert (workspace_dir() / staged["script_path"]).exists()
     print(f"service.py self-check OK - staged={staged['script_path']}, views={after['views']}")
 
 

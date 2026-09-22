@@ -18,11 +18,11 @@ if sys.platform == "win32":
 
 from plaiground_host.portfolio.llm.generator import generate_portfolio
 from plaiground_host.portfolio.services.renderer import render_portfolio
-from plaiground_host.paths import TELEMETRY_DIR
+from plaiground_host.paths import telemetry_dir
 
 
 def build_real_portfolio(run_id: str | None = None) -> None:
-    base = TELEMETRY_DIR
+    base = telemetry_dir()
     telemetry_path = (base / "runs" / f"{run_id}.json") if run_id else (base / "raw_telemetry.json")
 
     if not telemetry_path.exists():

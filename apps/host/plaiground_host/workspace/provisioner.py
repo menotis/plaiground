@@ -2,7 +2,7 @@
 provisioner.py — EnvironmentProvisioner: LocalDockerAdapter (어댑터 D).
 
 DECISION_ENV_PROVISIONING.md 최종 결정 반영: `plaiground-base` 컨테이너를 띄우고
-레포 루트를 /workspace로 bind mount, spec.extra_requirements를 컨테이너 안에서
+사용자 워크스페이스 폴더만 /workspace로 bind mount, spec.extra_requirements를 컨테이너 안에서
 동적 설치, code-server 포트를 로컬 루프백에만 노출한다.
 
 시그니처(ensure_ready(spec) -> EnvReport)만 고정 — 로컬 어댑터 1개뿐이라
@@ -14,14 +14,12 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ..paths import GENERATED_DIR, REPO_ROOT
+from ..paths import workspace_dir
 from .catalog import ModelCatalog, ModelSpec
 
 _IMAGE = "plaiground-base:dev"
 _CONTAINER_NAME = "plaiground-workspace"
 _READY_MARKER = "/tmp/.plaiground_ready"  # entrypoint.sh가 모델별 설치를 끝낸 뒤 생성
-_REPO_ROOT = REPO_ROOT
-_GENERATED_DIR = GENERATED_DIR
 _HOST_PORT = 8080
 
 
@@ -63,23 +61,23 @@ def _wait_ready(container_id: str, timeout_s: int = 300) -> bool:
     return False
 
 
-def _write_requirements(spec: ModelSpec) -> str | None:
-    """spec.extra_requirements를 generated/에 파일로 써서 컨테이너 안 경로를 반환."""
+def _write_requirements(spec: ModelSpec, workspace: Path) -> str | None:
+    """spec.extra_requirements를 워크스페이스에 파일로 써서 컨테이너 안 경로를 반환."""
     if not spec.extra_requirements:
         return None
-    _GENERATED_DIR.mkdir(parents=True, exist_ok=True)
-    req_path = _GENERATED_DIR / f"requirements_{spec.model_id}.txt"
+    req_path = workspace / f"requirements_{spec.model_id}.txt"
     req_path.write_text("\n".join(spec.extra_requirements), encoding="utf-8")
-    return f"/workspace/{req_path.relative_to(_REPO_ROOT).as_posix()}"
+    return f"/workspace/{req_path.name}"
 
 
-def ensure_ready(spec: ModelSpec, host_port: int = _HOST_PORT) -> EnvReport:
+def ensure_ready(spec: ModelSpec, host_port: int = _HOST_PORT, workspace: Path | None = None) -> EnvReport:
     """
     모델 스펙에 맞는 컨테이너 환경을 준비하고 code-server를 띄운다.
 
     Args:
         spec: ModelCatalog에서 조회한 ModelSpec.
         host_port: code-server를 노출할 호스트 포트 (기본 8080, 루프백 전용).
+        workspace: /workspace로 마운트할 호스트 폴더. 기본은 로컬 사용자 워크스페이스.
 
     Returns:
         EnvReport: GPU 가용 여부, 컨테이너 ID, 접속 URL, 경고 목록.
@@ -91,7 +89,7 @@ def ensure_ready(spec: ModelSpec, host_port: int = _HOST_PORT) -> EnvReport:
             raise RuntimeError("Docker 데몬에 연결할 수 없습니다. Docker Desktop을 먼저 실행하세요.")
         raise RuntimeError(
             f"'{_IMAGE}' 이미지가 없습니다. "
-            f"apps/host/docker/plaiground-base에서 'docker build -t {_IMAGE} .'를 먼저 실행하세요."
+            f"저장소 루트에서 'docker build -f apps/host/docker/plaiground-base/Dockerfile -t {_IMAGE} .'를 먼저 실행하세요."
         )
 
     warnings: list[str] = []
@@ -105,19 +103,19 @@ def ensure_ready(spec: ModelSpec, host_port: int = _HOST_PORT) -> EnvReport:
     # 모델 전환 시 컨테이너 재사용하지 않고 매번 새로 띄움 (DECISION 문서 권고).
     _run(["docker", "rm", "-f", _CONTAINER_NAME])
 
-    requirements_container_path = _write_requirements(spec)
+    workspace = (workspace or workspace_dir()).resolve()
+    (workspace / ".telemetry").mkdir(parents=True, exist_ok=True)
+    requirements_container_path = _write_requirements(spec, workspace)
 
     cmd = [
         "docker", "run", "-d", "--rm",
         "--name", _CONTAINER_NAME,
         *(["--gpus", "all"] if gpu_available else []),
-        "-v", f"{_REPO_ROOT}:/workspace",
+        "-v", f"{workspace}:/workspace",
         "-p", f"127.0.0.1:{host_port}:8080",
-        # 웹 IDE 터미널에서 `python var/generated/train_x.py`가 바로 되도록.
-        # 없으면 생성 스크립트의 `from plaiground_telemetry ...`가 ImportError.
-        "-e", "PYTHONPATH=/workspace/packages/telemetry",
-        # 컨테이너 안의 SDK가 호스트와 같은 var/telemetry에 쓰도록 위치를 명시한다.
-        "-e", "PLAIGROUND_TELEMETRY_DIR=/workspace/var/telemetry",
+        # SDK(plaiground_telemetry)는 이미지에 설치되어 있다. 컨테이너에는 사용자 폴더만 보인다 —
+        # 플랫폼 소스·.env는 마운트되지 않는다. SDK 기록 위치는 마운트 안의 .telemetry.
+        "-e", "PLAIGROUND_TELEMETRY_DIR=/workspace/.telemetry",
         *(["-e", f"MODEL_REQUIREMENTS_FILE={requirements_container_path}"] if requirements_container_path else []),
         _IMAGE,
     ]
