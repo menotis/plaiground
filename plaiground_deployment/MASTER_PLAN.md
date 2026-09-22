@@ -97,7 +97,7 @@ A1-0을 맨 앞에 둔 이유: 이동 단계마다 GPU와 Docker를 띄워 전�
 
 ### A2. 계정·조직 만들기 · 담당: 같이 · 약 3시간
 
-상세는 [DEPLOYMENT_PLAN.md](DEPLOYMENT_PLAN.md) 2장. **전부 무료이고 카드 등록도 없다.** 순서만 다시 적는다: Bitwarden → 루트 Gmail → Cloudflare 계정(Pages용) → GitHub 조직 → Supabase 조직과 dev 프로젝트 → 로그인용 OAuth 앱(GitHub, Google) → Tailscale.
+상세는 [DEPLOYMENT_PLAN.md](DEPLOYMENT_PLAN.md) 2장. **전부 무료이고 카드 등록도 없다.** 순서만 다시 적는다: Bitwarden → 루트 Gmail → Cloudflare 계정(Pages용) → GitHub 조직 → Supabase 조직과 dev 프로젝트 → Google OAuth 클라이언트(B2-4 시점) → Tailscale.
 
 먼저 합의할 것: 저장소 이전과 공개 여부, 호스트 층 담당자.
 

@@ -63,9 +63,9 @@ Cloudflare와 Supabase는 GPU도 Docker도 실행하지 못한다. 그래서 배
 3. - [ ] **Cloudflare 계정** — 루트 Gmail로 가입. 용도는 Pages(SPA 호스팅) 하나다. 카드 등록 없이 된다. 두 사람의 개인 이메일을 Members에 Super Administrator로 초대. 계정 전체에 2단계 인증 강제.
 4. - [ ] **GitHub Organization** (무료) — **준형의 개인 GitHub 계정으로 생성**하고 상협의 개인 계정을 두 번째 Owner로 초대. GitHub은 조직에 별도 로그인이 없고, 여러 사람이 함께 쓰는 공용 개인 계정은 약관상 허용되지 않으므로 루트 계정을 만들지 않는다. Owner가 둘이면 한 사람이 빠져도 조직이 유지된다. 조직 설정에서 2단계 인증 필수로. 그 뒤 2.1에서 합의했다면 `pg_demo`를 조직으로 이전하고, 각자 로컬에서 원격 주소를 갱신한다.
 5. - [ ] **Supabase Organization** (무료) — 루트 계정으로 생성, 두 사람을 Owner로 초대. 조직은 하나(`menotis`, Type은 Startup)이고 그 안에 프로젝트를 만든다. 지금은 `plaiground-dev` 하나만 만든다. `plaiground-prod`는 실제 배포 직전(Phase 2)에 만든다. 미리 만들면 요청이 없어 일주일 뒤 일시정지된다. 리전은 Northeast Asia (Seoul). DB 비밀번호는 Bitwarden으로. 무료 등급은 활성 프로젝트 2개까지이고, **7일간 요청이 없으면 일시정지**되므로 Phase 5에서 핑을 건다.
-6. - [ ] **로그인용 OAuth 앱 2개** — **B2-4(로그인 구현) 시작 시점에 만든다.** 그 전에는 쓸 곳이 없다. 둘 다 무료이고 도메인이 필요 없다. 클라이언트 ID/시크릿은 Bitwarden에 넣고 Supabase 대시보드 Auth 설정에 입력한다. 리디렉션 주소는 Supabase가 알려 주는 `https://<프로젝트>.supabase.co/auth/v1/callback`을 그대로 쓴다.
-   - **GitHub OAuth App**: GitHub 조직 설정에서 만든다. 심사도 사용자 수 제한도 없다. 기본 로그인 수단으로 쓴다.
-   - **Google OAuth 클라이언트**: 루트 Gmail로 Google Cloud 프로젝트를 만들어 생성한다. 동의 화면은 "테스트" 상태로 두고 테스터 이메일을 등록한다(최대 100명). 파일럿 규모에는 충분하다. 정식 게시는 도메인이 생긴 뒤에 한다.
+6. - [ ] **로그인용 Google OAuth 클라이언트** — **B2-4(로그인 구현) 시작 시점에 만든다.** 그 전에는 쓸 곳이 없다. 무료이고 도메인이 필요 없다. 루트 Gmail로 Google Cloud 프로젝트를 만들고 OAuth 동의 화면(외부, 이메일·프로필만) → 클라이언트 ID 생성. 리디렉션 주소는 Supabase가 알려 주는 `https://<프로젝트>.supabase.co/auth/v1/callback`. ID/시크릿은 Bitwarden 조직 컬렉션과 Supabase Auth 설정에. 동의 화면은 "테스트" 상태로 두고 테스터 이메일을 등록한다(최대 100명, 파일럿에 충분). 정식 게시는 100명을 넘길 때 하며 홈페이지·개인정보 처리방침 주소가 필요하다(Phase 5).
+   - Google만 쓰는 이유: 학생은 모두 Google 계정이 있고, BYOK(AI Studio 키)도 Google 계정이라 하나로 통일된다. GitHub 로그인은 필요해지면 Supabase에서 스위치 하나로 추가한다.
+   - 파일럿 학교의 Google Workspace가 외부 앱 로그인을 막아 두었는지 미리 확인한다.
 7. - [ ] **Tailscale** (무료 Personal 플랜) — 루트 Gmail로 가입해 tailnet을 만들고 두 사람의 개인 계정을 초대한다. GPU 호스트 PC와 각자의 노트북에 설치한다. Phase 3에서 쓴다. **무료 플랜은 비상업적 용도 한정**이라 두 사람의 개발·시연에만 쓰고, 외부 사용자를 받을 때는 8장의 방법으로 바꾼다.
 
 ### 2.3 하지 않아도 되는 것
@@ -114,14 +114,14 @@ Phase 1과 Phase 2는 서로 의존하지 않아 **동시에 진행**할 수 있
 
 - [ ] **Supabase 스키마와 RLS.** 테이블 초안은 5장. Supabase의 `anon key`는 SPA에 그대로 노출되는 공개 키이므로 **RLS(행 수준 보안)가 유일한 방어선**이다. 모든 테이블에 RLS를 켜고, 정책 없이 만든 테이블이 없는지 확인한다.
 - [ ] **커뮤니티 글 40건 시드.** `community_demo/posts.py`를 SQL 시드로 변환.
-- [ ] **로그인.** Supabase Auth + GitHub OAuth(기본) + Google OAuth(테스트 상태, 등록된 테스터만). 이메일 로그인은 무료 등급의 발송 한도가 매우 낮아 기본으로 쓰지 않는다.
+- [ ] **로그인.** Supabase Auth + Google OAuth(테스트 상태, 등록된 테스터만). GitHub은 선택. 이메일 로그인은 무료 등급의 발송 한도가 매우 낮아 기본으로 쓰지 않는다.
 - [ ] **SPA 수정.** 커뮤니티 API 4개(`posts`, `comments`, `interact`, `comment`)를 `supabase-js` 직접 호출로 교체. 나머지 `/api/*` 호출은 `src/api.js`의 호출 함수 하나로 모아 주소, 인증 헤더, Gemini 키 헤더를 한 곳에서 붙인다. 지금은 `fetch` 15곳과 `EventSource` 2곳이 컴포넌트에 흩어져 있고 전부 상대 경로다.
 - [ ] **SSE를 `fetch` 스트리밍으로 교체.** `EventSource`는 요청 헤더를 설정할 수 없어 인증 토큰과 Gemini 키를 보낼 수 없다. 키를 URL 쿼리에 넣는 것은 로그에 남으므로 금지. 대상은 `/api/setup`, `/api/portfolio/run` 두 곳.
 - [ ] **관리자 역할.** 현재 Login 드롭다운의 "관리자" 선택을 `profiles.role`로 교체. Faculty LMS는 `role = 'faculty'`만 접근.
 - [ ] **Cloudflare Pages 연결.** GitHub 조직 저장소 연결, 빌드 디렉터리 `apps/web`, `main` 푸시 시 자동 배포, PR마다 미리보기 URL. 공개 주소는 `https://<프로젝트>.pages.dev`이고, 프로젝트 이름은 나중에 바꾸기 번거로우니 `plaiground`처럼 신중히 정한다.
 - [ ] **GPU 호스트 오프라인 상태 처리.** Start AI, Web IDE, View AI 화면에서 API가 응답하지 않으면 "워크스페이스 서버가 꺼져 있습니다" 안내를 띄운다.
 
-**완료 기준:** 처음 보는 사람이 `https://<프로젝트>.pages.dev`에 들어와 GitHub으로 가입하고, 커뮤니티 글을 읽고 댓글을 쓰고, 다른 계정으로는 그 댓글을 수정할 수 없다.
+**완료 기준:** 처음 보는 사람이 `https://<프로젝트>.pages.dev`에 들어와 Google로 가입하고, 커뮤니티 글을 읽고 댓글을 쓰고, 다른 계정으로는 그 댓글을 수정할 수 없다.
 
 ### Phase 3 — GPU 호스트를 Tailscale로 연결 (두 사람 시연용)
 
@@ -218,7 +218,7 @@ GPU 호스트로 가는 모든 요청에는 `Authorization: Bearer <Supabase JWT
 | Supabase `anon key` | SPA 빌드 환경변수 | 공개 키. RLS가 전제 |
 | Supabase `service_role key` | GPU 호스트 환경변수만 | **SPA·저장소·컨테이너에 절대 넣지 않는다.** RLS를 우회한다 |
 | Supabase DB 비밀번호 | Bitwarden | 마이그레이션 실행 시에만 사용 |
-| GitHub·Google OAuth 클라이언트 시크릿 | Supabase 대시보드 | |
+| Google OAuth 클라이언트 시크릿 | Supabase 대시보드 | |
 | Cloudflare API 토큰 | GitHub Actions 시크릿 | Pages 자동 배포를 Actions로 할 경우만 |
 | 서명용 Ed25519 개인키 | GPU 호스트만 | Phase 4 |
 | 사용자 Gemini 키 | **어디에도 저장하지 않는다** | 요청 단위로 메모리에서만 사용 |

@@ -8,7 +8,7 @@
 
 GPU 호스트가 꺼져 있어도 인터넷에서 항상 열려 있어야 하는 것. React 프론트엔드(`apps/web`), Supabase(로그인·DB), Cloudflare Pages(호스팅), 그리고 약관·백업 같은 운영 준비.
 
-**목표 한 줄:** 처음 보는 사람이 `https://<이름>.pages.dev`에 들어와 GitHub으로 가입하고, 커뮤니티 글을 읽고 댓글을 쓰고, 다른 계정으로는 그 댓글을 고칠 수 없다. (Stage B 완료 기준)
+**목표 한 줄:** 처음 보는 사람이 `https://<이름>.pages.dev`에 들어와 Google로 가입하고, 커뮤니티 글을 읽고 댓글을 쓰고, 다른 계정으로는 그 댓글을 고칠 수 없다. (Stage B 완료 기준)
 
 **소유 폴더:** `apps/web/`, `plaiground_deployment/supabase/`, `plaiground_deployment/cloudflare/`, `docs/`. `apps/host/`와 `packages/telemetry/`는 준형 소유이므로 서버 변경이 필요하면 `docs/interface.md`에 적고 준형에게 요청한다.
 
@@ -58,7 +58,7 @@ GPU 호스트가 꺼져 있어도 인터넷에서 항상 열려 있어야 하는
 | B2-1 | **`api.js` 도입** — `apps/web/src/api.js`에 `api(path, options)` 하나와 `apiStream(path, onEvent)` 하나. 주소는 `import.meta.env.VITE_API_BASE`(로컬은 빈 값), 헤더는 여기서만 붙인다. 컴포넌트의 `fetch` 15곳과 `EventSource` 2곳을 전부 이것으로 교체. SSE는 `fetch` 응답의 `body.getReader()`로 읽어 `event:`/`data:` 줄을 해석(EventSource는 헤더를 못 붙여서 쓸 수 없다) | `src/api.js`(신규), 컴포넌트 7개 | 동작 변화 없음. `grep -rn "fetch(\|EventSource" src/`가 `api.js`에서만 나온다 |
 | B2-2 | **Supabase 스키마** — 테이블은 이 문서 3장. SQL을 `plaiground_deployment/supabase/migrations/0001_init.sql`로 저장하고 `plaiground-dev`의 SQL Editor에서 실행. **모든 테이블에 RLS를 켠다.** `anon key`는 브라우저에 그대로 노출되는 공개 키라 RLS가 유일한 방어선이다 | `supabase/migrations/` | 정책 없는 테이블이 없다. 다른 계정의 댓글을 `UPDATE`하면 0행 |
 | B2-3 | **글 40건 시드** — `posts.py`의 `POSTS`를 읽어 `INSERT` SQL을 출력하는 파이썬 스크립트 하나(`supabase/seed_posts.py`). 출력물을 `0002_seed_posts.sql`로 저장해 실행 | `supabase/seed_posts.py`, `0002_seed_posts.sql` | `posts` 40행, 카테고리별 10행 |
-| B2-4 | **로그인** — Supabase Auth. 제공자는 GitHub(기본)과 Google(테스트 상태). 프론트에 `@supabase/supabase-js` 추가(이 작업에서 유일한 새 의존성). `App.jsx`의 `role` 상태를 세션 + `profiles.role`로 교체. 가입 시 `profiles` 행을 만드는 트리거는 SQL로 | `App.jsx`, `src/supabase.js`(신규), `package.json`, `0003_profiles_trigger.sql` | GitHub으로 가입되고 새로고침해도 로그인이 유지된다. Faculty LMS는 `role='faculty'`일 때만 탭에 보인다 |
+| B2-4 | **로그인** — Supabase Auth. 제공자는 Google(테스트 상태, 등록 테스터만). GitHub은 선택. 프론트에 `@supabase/supabase-js` 추가(이 작업에서 유일한 새 의존성). `App.jsx`의 `role` 상태를 세션 + `profiles.role`로 교체. 가입 시 `profiles` 행을 만드는 트리거는 SQL로 | `App.jsx`, `src/supabase.js`(신규), `package.json`, `0003_profiles_trigger.sql` | Google로 가입되고 새로고침해도 로그인이 유지된다. Faculty LMS는 `role='faculty'`일 때만 탭에 보인다 |
 | B2-5 | **커뮤니티를 Supabase로** — `posts`, `comments`, `interact`, `comment` 호출 4개를 `supabase-js`로. 실습해보기(`/api/community/practice`)만 호스트 API에 남긴다(IDE 워크스페이스에 파일을 넣는 동작이라서) | `Community.jsx` | 호스트 서버를 꺼도 커뮤니티가 동작한다. 댓글은 본인만 삭제 가능 |
 | B2-6 | **Cloudflare Pages** — GitHub 조직 저장소 연결. Root directory `apps/web`, Build command `npm run build`, Output `dist`. 환경변수 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE`. `main` 푸시 시 자동 배포, PR마다 미리보기 URL | Pages 대시보드, `cloudflare/README.md`에 설정값 기록 | 공개 URL에서 로그인·커뮤니티가 된다 |
 | B2-7 | **호스트 오프라인 안내** — `api.js`가 연결 실패를 한 종류의 오류로 던지고, Start AI·Web IDE·View AI·Portfolio 생성 버튼이 "워크스페이스 서버가 꺼져 있습니다" 안내를 띄운다. 포트폴리오 **열람**은 Stage C부터 Supabase에서 읽으므로 이 안내와 무관 | `api.js`, 화면 4개 | 호스트를 끄고 공개 URL을 열어도 깨진 화면이 없다 |
