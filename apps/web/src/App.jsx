@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { ArrowUpRight, Check, ChevronDown, GraduationCap, LogOut, ShieldCheck, X } from 'lucide-react';
+import { ArrowUpRight, Check, GraduationCap, LogOut, ShieldCheck, X } from 'lucide-react';
+import { supabase } from './supabase.js';
+import { setAccessTokenGetter } from './api.js';
 import StartAI from './StartAI.jsx';
 import IdeView from './IdeView.jsx';
 import ViewAI from './ViewAI.jsx';
@@ -86,33 +88,20 @@ function Toasts({ toasts, remove }) {
   );
 }
 
-// ─── 로그인 메뉴 (학생/관리자 선택) ───────────────────────────────────────────
-function LoginMenu({ role, onLogin, onLogout }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef(null);
+// ─── 로그인 메뉴 (Google OAuth · Supabase 세션) ───────────────────────────────
+const ROLE_LABEL = { student: '학생', faculty: '교수', admin: '관리자' };
 
-  // 열린 메뉴는 Escape·바깥 클릭으로 닫힌다
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
-    const onClick = (e) => { if (!rootRef.current?.contains(e.target)) setOpen(false); };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onClick);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('mousedown', onClick);
-    };
-  }, [open]);
-
-  if (role) {
-    const isAdmin = role === 'admin';
+function LoginMenu({ profile, onLogin, onLogout }) {
+  if (profile) {
+    const staff = profile.role === 'faculty' || profile.role === 'admin';
     return (
       <div className="flex items-center gap-1.5">
         <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium ${
-          isAdmin ? 'bg-gold/15 text-gold' : 'bg-cobalt/15 text-cobalt'
+          staff ? 'bg-gold/15 text-gold' : 'bg-cobalt/15 text-cobalt'
         }`}>
-          {isAdmin ? <ShieldCheck className="w-3.5 h-3.5" /> : <GraduationCap className="w-3.5 h-3.5" />}
-          {isAdmin ? '관리자' : '학생'}
+          {staff ? <ShieldCheck className="w-3.5 h-3.5" /> : <GraduationCap className="w-3.5 h-3.5" />}
+          {profile.display_name || ROLE_LABEL[profile.role]}
+          {profile.display_name && <span className="opacity-60">· {ROLE_LABEL[profile.role]}</span>}
         </span>
         <button
           onClick={onLogout}
@@ -126,35 +115,12 @@ function LoginMenu({ role, onLogin, onLogout }) {
   }
 
   return (
-    <div className="relative" ref={rootRef}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] text-mist hover:text-ink transition-colors"
-      >
-        Login
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        // 단순 버튼 목록 — menu role은 화살표 키 포커스 관리까지 약속하므로 쓰지 않는다
-        <div className="absolute right-0 top-full mt-2 w-48 glass-card rounded-lg p-1.5 z-50">
-          <button
-            onClick={() => { setOpen(false); onLogin('student'); }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-md text-[13px] text-ink hover:bg-white/8 transition-colors text-left"
-          >
-            <GraduationCap className="w-4 h-4 text-cobalt shrink-0" />
-            학생으로 로그인
-          </button>
-          <button
-            onClick={() => { setOpen(false); onLogin('admin'); }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-md text-[13px] text-ink hover:bg-white/8 transition-colors text-left"
-          >
-            <ShieldCheck className="w-4 h-4 text-gold shrink-0" />
-            관리자로 로그인
-          </button>
-        </div>
-      )}
-    </div>
+    <button
+      onClick={onLogin}
+      className="px-4 py-2 rounded-full text-[13px] text-mist hover:text-ink transition-colors"
+    >
+      Google로 로그인
+    </button>
   );
 }
 
@@ -168,8 +134,9 @@ const BASE_TABS = [
 ];
 const ADMIN_TAB = { id: 'lms', label: 'Faculty LMS' };
 
-function TopBar({ view, go, role, onLogin, onLogout }) {
-  const tabs = role === 'admin' ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS;
+function TopBar({ view, go, profile, onLogin, onLogout }) {
+  const staff = profile?.role === 'faculty' || profile?.role === 'admin';
+  const tabs = staff ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS;
   const link = (t, extra = '') => (
     <button
       key={t.id}
@@ -190,7 +157,7 @@ function TopBar({ view, go, role, onLogin, onLogout }) {
         <nav className="hidden md:flex items-center gap-6 text-[13px]">
           {tabs.map((t) => link(t))}
         </nav>
-        <LoginMenu role={role} onLogin={onLogin} onLogout={onLogout} />
+        <LoginMenu profile={profile} onLogin={onLogin} onLogout={onLogout} />
       </div>
       {/* 모바일 전용 메뉴 행 */}
       <nav className="md:hidden flex items-center gap-5 overflow-x-auto px-6 pb-3 text-[13px]">
@@ -201,7 +168,7 @@ function TopBar({ view, go, role, onLogin, onLogout }) {
 }
 
 // ─── 랜딩 페이지 ──────────────────────────────────────────────────────────────
-function Landing({ go, role, onLogin, onLogout }) {
+function Landing({ go, profile, onLogin, onLogout }) {
   const [openFaq, setOpenFaq] = useState(0);
 
   const faqs = [
@@ -222,7 +189,7 @@ function Landing({ go, role, onLogin, onLogout }) {
   return (
     <div className="min-h-screen bg-void text-ink overflow-x-clip">
       {/* ── 내비게이션 — 모든 페이지 공통 TopBar ── */}
-      <TopBar view="landing" go={go} role={role} onLogin={onLogin} onLogout={onLogout} />
+      <TopBar view="landing" go={go} profile={profile} onLogin={onLogin} onLogout={onLogout} />
 
       {/* ── 히어로 — 학습 여정이 원장이 되는 순간을 그대로 보여준다 ── */}
       <section id="top" className="relative overflow-hidden">
@@ -438,10 +405,10 @@ function Landing({ go, role, onLogin, onLogout }) {
 }
 
 // ─── 콘솔 셸 — 랜딩과 동일한 TopBar를 그대로 쓴다 ─────────────────────────────
-function ConsoleShell({ view, go, role, onLogin, onLogout, children }) {
+function ConsoleShell({ view, go, profile, onLogin, onLogout, children }) {
   return (
     <div className="min-h-screen bg-void text-ink">
-      <TopBar view={view} go={go} role={role} onLogin={onLogin} onLogout={onLogout} />
+      <TopBar view={view} go={go} profile={profile} onLogin={onLogin} onLogout={onLogout} />
       <main className="pt-32 md:pt-24">{children}</main>
     </div>
   );
@@ -450,7 +417,8 @@ function ConsoleShell({ view, go, role, onLogin, onLogout, children }) {
 // ─── 루트 ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [view, setView] = useState('landing');
-  const [role, setRole] = useState(null); // null | 'student' | 'admin'
+  const [authSession, setAuthSession] = useState(null); // Supabase 로그인 세션
+  const [profile, setProfile] = useState(null); // profiles 행 — { role, display_name }
   const [session, setSession] = useState(null); // /api/setup ready 페이로드 (IDE 접속 정보)
   const [staged, setStaged] = useState(null); // 커뮤니티 '실습해보기'로 준비된 코드 정보
   const [toasts, setToasts] = useState([]);
@@ -488,19 +456,49 @@ export default function App() {
     });
   }, []);
 
-  const login = useCallback((r) => {
-    setRole(r);
-    addToast(r === 'admin' ? '관리자로 로그인했습니다 — Faculty LMS가 열렸습니다.' : '학생으로 로그인했습니다.');
+  // Supabase 세션 구독 — 새로고침·OAuth 리다이렉트 복귀 모두 여기로 들어온다
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      setAuthSession(s);
+      if (event === 'SIGNED_IN') addToast('로그인했습니다.');
+    });
+    return () => sub.subscription.unsubscribe();
   }, [addToast]);
 
-  const logout = useCallback(() => {
-    setRole(null);
+  // 세션이 바뀌면 api.js의 Authorization 헤더 공급자를 갱신하고 profiles를 읽는다
+  useEffect(() => {
+    setAccessTokenGetter(() => authSession?.access_token ?? null);
+    if (!authSession) {
+      setProfile(null);
+      return;
+    }
+    let live = true;
+    supabase
+      .from('profiles')
+      .select('role, display_name')
+      .eq('id', authSession.user.id)
+      .single()
+      .then(({ data }) => { if (live && data) setProfile(data); });
+    return () => { live = false; };
+  }, [authSession]);
+
+  const login = useCallback(() => {
+    supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+  }, []);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setView((v) => (v === 'lms' ? 'start' : v));
     addToast('로그아웃했습니다.');
   }, [addToast]);
 
-  // LMS는 관리자 전용 — 다른 역할로 접근하면 Start AI로 대체
-  const effectiveView = view === 'lms' && role !== 'admin' ? 'start' : view;
+  // LMS는 교직원 전용 — 다른 역할로 접근하면 Start AI로 대체
+  const isStaff = profile?.role === 'faculty' || profile?.role === 'admin';
+  const effectiveView = view === 'lms' && !isStaff ? 'start' : view;
 
   return (
     <>
@@ -510,9 +508,9 @@ export default function App() {
         className={SUPPORTS_VT ? undefined : 'vt-fallback'}
       >
         {effectiveView === 'landing' ? (
-          <Landing go={go} role={role} onLogin={login} onLogout={logout} />
+          <Landing go={go} profile={profile} onLogin={login} onLogout={logout} />
         ) : (
-          <ConsoleShell view={effectiveView} go={go} role={role} onLogin={login} onLogout={logout}>
+          <ConsoleShell view={effectiveView} go={go} profile={profile} onLogin={login} onLogout={logout}>
             {effectiveView === 'start' && <StartAI go={go} onSession={setSession} addToast={addToast} />}
             {effectiveView === 'ide' && <IdeView session={session} staged={staged} go={go} addToast={addToast} />}
             {effectiveView === 'community' && <Community go={go} postId={viewParam} onStaged={setStaged} addToast={addToast} />}
