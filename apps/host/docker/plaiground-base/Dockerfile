@@ -47,12 +47,16 @@ RUN pip install --no-cache-dir torch torchvision --index-url https://download.py
 # 텔레메트리 SDK — 사용자 컨테이너 안에서 실행되는 유일한 플랫폼 코드. 표준 라이브러리만 의존.
 # 이 레이어는 torch 레이어 뒤에 있어 SDK만 바뀌면 캐시가 살아 재빌드가 수십 초로 끝난다.
 COPY packages/telemetry /tmp/plaiground_telemetry
-RUN pip install --no-cache-dir --no-deps /tmp/plaiground_telemetry && rm -rf /tmp/plaiground_telemetry
+# Ubuntu 22.04의 pip 22 / setuptools 59는 pyproject의 [project] 메타데이터를 못 읽어 UNKNOWN-0.0.0 빈 패키지를 만든다.
+RUN pip install --no-cache-dir "pip>=24" "setuptools>=68" \
+    && pip install --no-cache-dir --no-deps /tmp/plaiground_telemetry \
+    && rm -rf /tmp/plaiground_telemetry \
+    && python -c "import plaiground_telemetry.recorder"
 
 WORKDIR /workspace
 EXPOSE 8080
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY apps/host/docker/plaiground-base/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

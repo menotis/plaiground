@@ -71,9 +71,15 @@ def provision(model_id: str, host_port: int = 8080, user: str = DEFAULT_USER) ->
     gpu = "GPU 사용" if report.gpu_available else "CPU 전용"
     yield f"      환경 준비 완료 ({gpu})"
 
-    script = generate(spec, out_dir=workspace)
+    existing = workspace / f"train_{spec.model_id.replace('-', '_')}.py"
+    if existing.exists():
+        # 학생이 고친 스크립트를 재세팅이 템플릿으로 되돌리면 안 된다 — 수정 이력이 곧 포트폴리오다.
+        script = existing
+        yield f"[3/3] 기존 학습 스크립트 유지: {script.name} (새로 받으려면 파일을 지우고 다시 세팅)"
+    else:
+        script = generate(spec, out_dir=workspace)
+        yield f"[3/3] 학습 스크립트 생성: {script.name}"
     container_path = _container_path(script, workspace)
-    yield f"[3/3] 학습 스크립트 생성: {script.name}"
     yield f"      웹 IDE에서 열기: {settings.IDE_URL}"
 
     return {
