@@ -107,6 +107,7 @@ API 서버는 docker 명령과 학습 파이프라인을 실행하므로 `127.0.
 
 ## 문서
 
+- [docs/HANDOFF.md](docs/HANDOFF.md): 이 저장소를 처음 보는 사람·에이전트를 위한 인수인계 (무엇을·왜·지금 어디까지)
 - [plaiground_deployment/MASTER_PLAN.md](plaiground_deployment/MASTER_PLAN.md): 배포까지의 통합 실행 계획. 현재 진행 위치
 - [docs/STATUS.md](docs/STATUS.md): View AI 구현 현황과 기술 부채
 - [docs/MVP_STATUS.md](docs/MVP_STATUS.md): MVP 구현 상태 명세 (2026-09-08 시점 기록)

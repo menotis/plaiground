@@ -18,6 +18,8 @@
 | 2026-09-22 | 노트북 기간: 각자 로컬, GPU 작업은 데스크톱 복귀 후, `var/`는 zip으로 | Tailscale 호스트가 꺼져 있음 | laptop_and_tailscale.md |
 | 2026-09-22 | Stage A 관문 통과: 상협이 5개 서비스(Bitwarden·GitHub·Cloudflare·Supabase·Tailscale)에 개인 계정으로 접속 확인 | | Stage B 병행 시작 |
 | 2026-09-22 | Tailscale Serve는 HTTPS만 켜고 **Funnel은 끔**. 연결 시험은 Stage C 시점에 | 인증 꺼진 서버를 인터넷에 열 수 있는 기능이라 | laptop_and_tailscale.md B장 |
+| 2026-09-22 | B2-4 Google 로그인 로컬 검증 완료: 로그인·profiles 자동 생성·첫 admin 지정·로그아웃/재로그인·Redirect URLs 등록 | | Stage B는 B2-5~B2-7 남음 |
+| 2026-09-22 | RLS/트리거에서 "대시보드 = service_role" 가정 금지. SQL Editor는 `postgres` 역할, `auth.role()`·`auth.uid()` 모두 비어 있음 | 첫 admin 부트스트랩이 트리거에 막혔음 | `0004_fix_protect_role.sql`. 토큰 있는 요청(`auth.uid() is not null`)만 검사 |
 | 2026-09-22 | 병합된 브랜치는 삭제. `feat/api-client`, `feat/api-headers`, `stage-b/host-refactor` 삭제됨 | 남은 브랜치 = 진행 중인 작업 | |
 
 ## 미결
