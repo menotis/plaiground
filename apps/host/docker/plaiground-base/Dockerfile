@@ -5,7 +5,8 @@
 #
 # 여기 안 들어있는 것 (의도적):
 # - 텔레메트리 SDK(packages/telemetry)는 이미지에 설치한다. 플랫폼 서버 코드는 이미지에도 마운트에도 없다.
-#   빌드는 저장소 루트에서: docker build -f apps/host/docker/plaiground-base/Dockerfile -t plaiground-base:dev .
+#   빌드는 저장소 루트에서: docker build -f apps/host/docker/plaiground-base/Dockerfile -t ghcr.io/menotis/plaiground-base:dev .
+#   올리기: docker push ghcr.io/menotis/plaiground-base:dev  (ghcr.io 로그인 필요, write:packages 토큰)
 # - (옛 방식) 소스 코드: 이미지에 굽지 않는다. `docker run`에서
 #   레포 루트를 /workspace로 bind mount 한다. 텔레메트리/제너레이터 코드가 계속
 #   바뀌는 단계라, 코드 한 줄 바꿀 때마다 이미지 재빌드하지 않기 위함.

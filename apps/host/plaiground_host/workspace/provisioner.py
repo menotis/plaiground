@@ -17,7 +17,7 @@ from pathlib import Path
 from ..paths import workspace_dir
 from .catalog import ModelCatalog, ModelSpec
 
-_IMAGE = "plaiground-base:dev"
+_IMAGE = "ghcr.io/menotis/plaiground-base:dev"  # 노트북은 docker pull, SDK를 고친 사람만 빌드·푸시
 _CONTAINER_NAME = "plaiground-workspace"
 _READY_MARKER = "/tmp/.plaiground_ready"  # entrypoint.sh가 모델별 설치를 끝낸 뒤 생성
 _HOST_PORT = 8080

@@ -45,10 +45,17 @@ pip install -e packages/telemetry -e apps/host
 cd apps/web && npm install
 ```
 
-컨테이너 이미지는 최초 1회, 그리고 SDK(`packages/telemetry`)를 고쳤을 때 저장소 루트에서 빌드한다.
+컨테이너 이미지는 빌드하지 말고 내려받는다 (7GB, 공개 이미지).
 
 ```bash
-docker build -f apps/host/docker/plaiground-base/Dockerfile -t plaiground-base:dev .
+docker pull ghcr.io/menotis/plaiground-base:dev
+```
+
+SDK(`packages/telemetry`)나 Dockerfile을 고친 사람만 저장소 루트에서 빌드해 올린다. `docker login ghcr.io`에는 `write:packages` 권한의 토큰이 필요하다.
+
+```bash
+docker build -f apps/host/docker/plaiground-base/Dockerfile -t ghcr.io/menotis/plaiground-base:dev .
+docker push ghcr.io/menotis/plaiground-base:dev
 ```
 
 Gemini 키는 `apps/host/plaiground_host/portfolio/.env`에 둔다. 저장소에 올라가지 않는다.

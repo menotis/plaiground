@@ -63,7 +63,7 @@ Cloudflare와 Supabase는 GPU도 Docker도 실행하지 못한다. 그래서 배
 3. - [ ] **Cloudflare 계정** — 루트 Gmail로 가입. 용도는 Pages(SPA 호스팅) 하나다. 카드 등록 없이 된다. 두 사람의 개인 이메일을 Members에 Super Administrator로 초대. 계정 전체에 2단계 인증 강제.
 4. - [ ] **GitHub Organization** (무료) — **준형의 개인 GitHub 계정으로 생성**하고 상협의 개인 계정을 두 번째 Owner로 초대. GitHub은 조직에 별도 로그인이 없고, 여러 사람이 함께 쓰는 공용 개인 계정은 약관상 허용되지 않으므로 루트 계정을 만들지 않는다. Owner가 둘이면 한 사람이 빠져도 조직이 유지된다. 조직 설정에서 2단계 인증 필수로. 그 뒤 2.1에서 합의했다면 `pg_demo`를 조직으로 이전하고, 각자 로컬에서 원격 주소를 갱신한다.
 5. - [ ] **Supabase Organization** (무료) — 루트 계정으로 생성, 두 사람을 Owner로 초대. 조직은 하나(`menotis`, Type은 Startup)이고 그 안에 프로젝트를 만든다. 지금은 `plaiground-dev` 하나만 만든다. `plaiground-prod`는 실제 배포 직전(Phase 2)에 만든다. 미리 만들면 요청이 없어 일주일 뒤 일시정지된다. 리전은 Northeast Asia (Seoul). DB 비밀번호는 Bitwarden으로. 무료 등급은 활성 프로젝트 2개까지이고, **7일간 요청이 없으면 일시정지**되므로 Phase 5에서 핑을 건다.
-6. - [ ] **로그인용 OAuth 앱 2개** — 둘 다 무료이고 도메인이 필요 없다. 클라이언트 ID/시크릿은 Bitwarden에 넣고 Supabase 대시보드 Auth 설정에 입력한다. 리디렉션 주소는 Supabase가 알려 주는 `https://<프로젝트>.supabase.co/auth/v1/callback`을 그대로 쓴다.
+6. - [ ] **로그인용 OAuth 앱 2개** — **B2-4(로그인 구현) 시작 시점에 만든다.** 그 전에는 쓸 곳이 없다. 둘 다 무료이고 도메인이 필요 없다. 클라이언트 ID/시크릿은 Bitwarden에 넣고 Supabase 대시보드 Auth 설정에 입력한다. 리디렉션 주소는 Supabase가 알려 주는 `https://<프로젝트>.supabase.co/auth/v1/callback`을 그대로 쓴다.
    - **GitHub OAuth App**: GitHub 조직 설정에서 만든다. 심사도 사용자 수 제한도 없다. 기본 로그인 수단으로 쓴다.
    - **Google OAuth 클라이언트**: 루트 Gmail로 Google Cloud 프로젝트를 만들어 생성한다. 동의 화면은 "테스트" 상태로 두고 테스터 이메일을 등록한다(최대 100명). 파일럿 규모에는 충분하다. 정식 게시는 도메인이 생긴 뒤에 한다.
 7. - [ ] **Tailscale** (무료 Personal 플랜) — 루트 Gmail로 가입해 tailnet을 만들고 두 사람의 개인 계정을 초대한다. GPU 호스트 PC와 각자의 노트북에 설치한다. Phase 3에서 쓴다. **무료 플랜은 비상업적 용도 한정**이라 두 사람의 개발·시연에만 쓰고, 외부 사용자를 받을 때는 8장의 방법으로 바꾼다.
