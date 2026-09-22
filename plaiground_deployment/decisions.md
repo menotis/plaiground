@@ -16,12 +16,14 @@
 | 2026-09-22 | PR은 **gh CLI**, 병합은 **Squash**, 리뷰는 상대, 작성자가 병합 | `main` 이력을 PR 단위로 | CONTRIBUTING.md |
 | 2026-09-22 | CI: GitHub Actions가 PR마다 `check.py`와 같은 점검 | 두 사람이 서로의 PR을 안 돌려봐도 됨 | `.github/workflows/check.yml` |
 | 2026-09-22 | 노트북 기간: 각자 로컬, GPU 작업은 데스크톱 복귀 후, `var/`는 zip으로 | Tailscale 호스트가 꺼져 있음 | laptop_and_tailscale.md |
+| 2026-09-22 | Stage A 관문 통과: 상협이 5개 서비스(Bitwarden·GitHub·Cloudflare·Supabase·Tailscale)에 개인 계정으로 접속 확인 | | Stage B 병행 시작 |
+| 2026-09-22 | Tailscale Serve는 HTTPS만 켜고 **Funnel은 끔**. 연결 시험은 Stage C 시점에 | 인증 꺼진 서버를 인터넷에 열 수 있는 기능이라 | laptop_and_tailscale.md B장 |
 | 2026-09-22 | 병합된 브랜치는 삭제. `feat/api-client`, `feat/api-headers`, `stage-b/host-refactor` 삭제됨 | 남은 브랜치 = 진행 중인 작업 | |
 
 ## 미결
 
 | 항목 | 언제 정하나 |
 |---|---|
-| Stage C 시연 날짜·장소 | 상협 B2-5 끝날 때. 준형 데스크톱 복귀 필요 |
+| Stage C 시연 날짜·장소 | 2026-09-22로 잡았으나 조건 미충족(상협 노트북 tailnet 미가입, 데스크톱 이틀 뒤 부재, B2 미완)으로 연기. 상협 B2-5 끝나고 준형 데스크톱 복귀 후 |
 | `plaiground-prod` Supabase 프로젝트 생성 시점 | Pages 연결(B2-6) 직전 |
 | 외부 사용자용 도메인 구매 | 첫 파일럿 상대가 정해질 때 (DEPLOYMENT_PLAN 8장) |
