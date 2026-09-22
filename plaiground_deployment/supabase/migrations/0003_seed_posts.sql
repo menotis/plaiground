@@ -1,4 +1,4 @@
--- 0002_seed_posts.sql — 커뮤니티 글 40건 시드 (B2-3)
+-- 0003_seed_posts.sql — 커뮤니티 글 40건 시드 (B2-3)
 -- 생성: python plaiground_deployment/supabase/seed_posts.py
 -- 실행: service_role 권한인 SQL Editor에서만 (posts는 쓰기 정책이 없다)
 

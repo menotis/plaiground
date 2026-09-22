@@ -2,7 +2,7 @@
 """posts.py의 글 40건을 Supabase posts 테이블 INSERT SQL로 출력한다.
 
 사용법:
-    python plaiground_deployment/supabase/seed_posts.py > plaiground_deployment/supabase/migrations/0002_seed_posts.sql
+    python plaiground_deployment/supabase/seed_posts.py > plaiground_deployment/supabase/migrations/0003_seed_posts.sql
 
 views/likes/bookmarks는 가상 시드값이라 옮기지 않는다(집계는 post_interactions에서 시작).
 """
@@ -27,7 +27,7 @@ def tags_lit(tags):
 
 
 def main():
-    print("-- 0002_seed_posts.sql — 커뮤니티 글 40건 시드 (B2-3)")
+    print("-- 0003_seed_posts.sql — 커뮤니티 글 40건 시드 (B2-3)")
     print("-- 생성: python plaiground_deployment/supabase/seed_posts.py")
     print("-- 실행: service_role 권한인 SQL Editor에서만 (posts는 쓰기 정책이 없다)")
     print()
