@@ -116,7 +116,7 @@ A1-0을 맨 앞에 둔 이유: 이동 단계마다 GPU와 Docker를 띄워 전�
 
 ## 3. Stage B — 두 층을 동시에 (2주)
 
-### B0. 인터페이스 확정 · 담당: 같이 · 반나절 · **가장 먼저**
+### B0. 인터페이스 확정 · 담당: 같이 · 반나절 · **완료 (2026-09-22, 회의 대신 문서로: decisions.md, docs/interface.md, supabase/migrations/, CONTRIBUTING.md)**
 
 두 사람이 2주간 따로 일하려면 만나는 지점을 먼저 고정해야 한다. [DEPLOYMENT_PLAN.md](DEPLOYMENT_PLAN.md) 5장의 초안(테이블, 엔드포인트 이동 경로, 비밀 목록)을 확정해 `docs/interface.md`로 저장한다. 이 회의에서 아래 두 가지도 결정한다.
 
