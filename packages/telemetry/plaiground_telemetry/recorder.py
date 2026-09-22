@@ -80,6 +80,7 @@ class TrainRecorder:
                 "out_shape": shapes.get(name, {}).get("out_shape"),
             })
         schema = {
+            "format_version": 1,  # 저장 방식이 바뀌면 올린다 — 뷰어가 옛 실행을 구분해 읽는다 (FORMAT.md)
             "model_class": type(self.model).__name__,
             "total_params": sum(p.numel() for p in self.model.parameters()),
             "trainable_params": self._numel,
@@ -153,6 +154,7 @@ def demo() -> None:
             rec.record(loss.item(), epoch=i / 3)
         schema = json.loads((rec.dir / "schema.json").read_text(encoding="utf-8"))
         assert schema["frame_numel"] == 4 * 3 + 3 + 3 * 2 + 2 == 23
+        assert schema["format_version"] == 1
         assert schema["flow"] == ["0", "1", "2"], schema["flow"]
         assert [l["type"] for l in schema["layers"]] == ["Linear", "ReLU", "Linear"]
         assert schema["layers"][0]["in_shape"] == [4] and schema["layers"][0]["out_shape"] == [3]
