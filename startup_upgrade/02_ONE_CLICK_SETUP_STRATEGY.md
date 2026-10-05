@@ -5,20 +5,21 @@
 
 ---
 
-## 1. 기술적 개요: 브라우저 보안 한계와 웹-로컬 연동의 실현 가능성
+## 1. 기술적 개요: 브라우저 보안 제약과 웹-로컬 연동 방안
 
-### 1.1 사용자의 핵심 질문에 대한 직접적 기술 답변
+### 1.1 사용자 질문에 대한 기술 검토
 > **"웹 페이지에서 똑같이 AI 모델을 선택하고 자신의 로컬 컴퓨터 작업 디렉토리 폴더를 설정하면, 그 로컬 디렉토리 폴더에 가상환경 설치와 도커 컨테이너 설치, AI 모델 설치, 예시 학습 코드 및 데이터 설치를 해주는 것이 기술적으로 가능한 작업인가?"**
 
-👉 **결론부터 말씀드리면, 100% 가능하며 이미 글로벌 선도 IT 기업들(Docker, Ollama, 1Password, GitHub Desktop 등)이 표준으로 사용하고 있는 검증된 아키텍처입니다.**
+👉 **기술적으로 구현 가능합니다.**  
+다만, 웹 브라우저의 보안 모델(샌드박스 정책)로 인해 순수 웹 프론트엔드 코드(JavaScript)만으로는 사용자의 로컬 OS 명령(`python -m venv`, `docker run` 등)을 직접 실행할 수 없습니다. 따라서 **로컬 에이전트 데몬(Local Agent Daemon)** 또는 **네이티브 브릿지**를 통한 통신 아키텍처를 적용합니다.
 
-### 1.2 웹 브라우저 샌드박스의 보안 제약과 해결책
-- **브라우저의 보안 한계 (Same-Origin Policy & Sandbox)**:
-  - 순수 웹 브라우저의 JavaScript(Chrome, Edge 등)는 악성 웹사이트가 사용자의 컴퓨터 하드디스크를 임의로 포맷하거나 악성 스크립트를 실행하는 것을 막기 위해, 로컬 OS 프로세스(`powershell.exe`, `docker run`, `python -m venv`)를 직접 실행할 수 있는 권한이 차단되어 있습니다.
-- **업계 표준 해결책: 로컬 에이전트 데몬 (Local Agent Daemon) 또는 네이티브 브릿지**:
-  - 사용자의 로컬 PC에서 가볍게 동작하는 **백그라운드 에이전트(`plaiground-daemon`)**가 로컬 포트(`127.0.0.1:8765`)를 열고 대기합니다.
-  - 사용자가 plAI-ground 웹사이트에서 [폴더 선택] 및 [모델 선택] 후 [원클릭 세팅 시작]을 누르면, 웹 브라우저가 로컬 에이전트에게 HTTP/WebSocket 요청을 전송합니다.
-  - 로컬 에이전트가 사용자의 컴퓨터 권한으로 해당 디렉토리에 가상환경 생성, 도커 빌드, 코드 및 데이터셋 배치를 완벽하게 수행하고 VS Code를 띄워줍니다.
+### 1.2 브라우저 보안 제약과 극복 메커니즘
+- **브라우저 샌드박스(Sandbox)의 제약**:
+  - Chrome, Edge 등 일반 웹 브라우저는 보안상 로컬 프로세스를 직접 기동하거나 로컬 시스템 파일에 임의로 바이너리를 실행하는 권한을 엄격히 차단합니다.
+- **해결 방안: 로컬 에이전트 데몬 (Web-to-Local Bridge)**:
+  - 사용자의 로컬 환경에서 경량 백그라운드 프로세스(`plaiground-daemon`)가 `127.0.0.1:8765` 포트로 대기합니다.
+  - 웹 페이지에서 사용자가 모델과 로컬 디렉토리 경로를 선택하고 [세팅 시작]을 누르면, 웹 브라우저가 로컬 데몬(`http://127.0.0.1:8765/api/setup`)으로 설정 데이터를 전송합니다.
+  - 로컬 데몬이 OS 권한으로 해당 디렉토리에 폴더 생성, 가상환경 구성, 패키지 설치, 템플릿 코드 배치를 실행하고 완료 후 VS Code를 호출합니다.
 
 ---
 
@@ -31,26 +32,26 @@
                                   │
          ┌────────────────────────┼────────────────────────┐
          ▼                        ▼                        ▼
-[방식 1: 개발자용 CLI]     [방식 2: 무료 코랩 1줄]    [방식 3: 웹-로컬 브릿지]
- - pip install plaiground  - !pip install plaiground  - 웹 UI에서 폴더 클릭
- - plaiground init         - pg.load_template()       - 로컬 데몬이 venv/도커 구축
- - 전공자/터미널 친화형    - 저사양/비전공자/GPU 0원  - 컴맹/초심자/UI 극대화
+[방식 1: CLI 터미널 도구]     [방식 2: Google Colab 1줄]   [방식 3: 웹-로컬 브릿지]
+ - pip install plaiground  - !pip install plaiground  - 웹 UI에서 폴더/모델 선택
+ - plaiground init         - pg.load_template()       - 로컬 데몬이 venv/도커 구성
+ - 전공자/터미널 환경       - 저사양 노트북/무료 GPU  - 웹 기반 비전공자/초심자
 ```
 
-| 비교 항목 | 방식 1. CLI 터미널 도구 | 방식 2. 구글 코랩 1줄 연동 | 방식 3. 웹-로컬 브릿지 (웹 UI 클릭) |
+| 비교 항목 | 방식 1. CLI 터미널 도구 | 방식 2. Google Colab 1줄 연동 | 방식 3. 웹-로컬 브릿지 (웹 UI 선택) |
 | :--- | :--- | :--- | :--- |
-| **대상 사용자** | 컴퓨터공학 전공생, 현업 엔지니어 | 저사양 노트북 소유자, GPU 없는 학생 | 1학년 학부생, 비전공자 국비 부트캠프생 |
-| **실행 방식** | `plaiground init resnet` | `!pip install plaiground` | 웹 페이지에서 마우스 클릭으로 폴더/모델 지정 |
-| **컴퓨팅 자원** | 사용자 로컬 PC (NVIDIA / Apple Silicon) | 구글 무료 T4/L4 GPU (Google 자원 레버리지) | 사용자 로컬 PC (venv 또는 Docker) |
-| **설치 소요 시간** | 30초 내외 | 10초 내외 | 1~2분 (로컬 패키지 설치 진행률 UI 표시) |
-| **스타트업 인프라 비용**| **0원** (순수 로컬 연산) | **0원** (Google 자원 흡수) | **0원** (순수 로컬 연산) |
+| **대상 사용자** | 컴퓨터공학 전공생, 현업 엔지니어 | GPU가 없거나 저사양 PC 사용자 | 1학년 학부생, 비전공 부트캠프 교육생 |
+| **실행 방식** | `plaiground init resnet` | `!pip install plaiground` | 웹 페이지에서 디렉토리/모델 선택 후 버튼 클릭 |
+| **컴퓨팅 자원** | 사용자 로컬 PC (GPU/CPU) | Google 제공 무료 T4/L4 GPU | 사용자 로컬 PC (venv 또는 Docker) |
+| **설치 소요 시간** | 30초 내외 | 10초 내외 | 1~2분 (패키지 다운로드 시간에 비례) |
+| **플랫폼 인프라 비용**| 0원 (로컬 연산) | 0원 (Google 자원 활용) | 0원 (로컬 연산) |
 
 ---
 
 ## 3. 세부 방식별 아키텍처 및 구현 명세
 
-### 3.1 방식 3 (사용자 요청 핵심): 웹-로컬 브릿지 (Web-to-Local Bridge)
-웹 화면에서 모델과 로컬 작업 폴더를 선택하면, 로컬 PC의 해당 폴더에 가상환경, 도커, 모델, 코드, 데이터가 마법처럼 세팅되는 방식입니다.
+### 3.1 방식 3: 웹-로컬 브릿지 (Web-to-Local Bridge)
+웹 화면에서 모델과 로컬 디렉토리 경로를 선택하면, 로컬 PC의 해당 경로에 가상환경, 패키지, 모델 템플릿, 학습 코드가 구성되는 방식입니다.
 
 #### 3.1.1 동작 흐름도 (End-to-End Workflow)
 ```mermaid
@@ -59,117 +60,102 @@ sequenceDiagram
     actor User as 사용자 (웹 브라우저)
     participant Web as plAI-ground 웹 플랫폼
     participant Daemon as 로컬 에이전트 데몬 (127.0.0.1:8765)
-    participant OS as 로컬 OS (PowerShell / Docker)
+    participant OS as 로컬 OS (Python / Docker)
     participant VSCode as 로컬 VS Code
 
-    User->>Web: 1. 모델 선택 (예: YOLOv8) & 로컬 폴더 지정 (C:/projects/yolo)
-    Web->>Daemon: 2. GET http://127.0.0.1:8765/health (데몬 생존 확인)
+    User->>Web: 1. 모델 선택 (예: YOLOv8) & 로컬 경로 지정 (예: C:/projects/yolo)
+    Web->>Daemon: 2. GET http://127.0.0.1:8765/health (데몬 응답 확인)
     alt 데몬 미실행 시
-        Web-->>User: "원클릭 에이전트 실행 필요" (1초 실행 스크립트 안내)
+        Web-->>User: 로컬 데몬 실행 스크립트 안내
     end
-    Web->>Daemon: 3. POST /api/setup { model: "yolov8", path: "C:/projects/yolo", mode: "venv" }
-    Daemon->>OS: 4. 지정 경로 생성 및 Python 가상환경(venv) 생성
-    Daemon->>OS: 5. PyTorch(CUDA 감지) 및 필수 라이브러리 자동 설치
-    Daemon->>Web: 6. SSE(Server-Sent Events)로 실시간 설치 진행률(0~100%) 스트리밍
-    Daemon->>OS: 7. 모델 템플릿(train.py), 샘플 데이터, DiffStack 텔레메트리 배치
-    Daemon->>VSCode: 8. code "C:/projects/yolo" 자동 실행 (IDE 팝업)
-    Web-->>User: 9. "세팅 완료! VS Code에서 학습을 시작하세요" 축하 화면
+    Web->>Daemon: 3. POST /api/setup { model: "yolov8", path: "C:/projects/yolo", env: "venv" }
+    Daemon->>OS: 4. 디렉토리 생성 및 Python 가상환경(venv) 생성
+    Daemon->>OS: 5. PyTorch(CUDA 환경 감지) 및 필수 라이브러리 설치
+    Daemon->>Web: 6. SSE(Server-Sent Events)로 실시간 설치 진행률(0~100%) 전달
+    Daemon->>OS: 7. 모델 템플릿 코드(train.py), 샘플 데이터셋, 텔레메트리 모듈 배치
+    Daemon->>VSCode: 8. code "C:/projects/yolo" 실행
+    Web-->>User: 9. 세팅 완료 안내
 ```
 
-#### 3.1.2 로컬 에이전트 데몬 구현 방안 (이미 구현된 `ai_set_demo` 확장)
-대표님이 기존에 만드신 `c:\workspace\plaiground\ai_set_demo\api_server.py`는 이미 로컬 FastAPI 서버로 도커 컨테이너를 제어하는 우수한 코어 로직을 가지고 있습니다. 이를 경량 백그라운드 데몬으로 패키징하면 됩니다:
+#### 3.1.2 로컬 에이전트 데몬 구현 방안
+기존에 구현된 `c:\workspace\plaiground\ai_set_demo\api_server.py`의 FastAPI 기반 환경 제어 로직을 로컬 에이전트 데몬으로 적용합니다:
 
-1. **설치/실행의 간소화**:
-   - 윈도우 사용자는 PowerShell 한 줄만 붙여넣으면 백그라운드에 등록됩니다:
-     ```powershell
-     irm https://plaiground.io/agent.ps1 | iex
-     ```
-   - 또는 10MB 미만의 단일 실행 파일(`plaiground-agent.exe`)을 다운로드하여 더블 클릭하면 윈도우 트레이 아이콘으로 상주.
-2. **로컬 에이전트 API 엔드포인트 명세**:
-   - `GET /health`: 에이전트 실행 여부 및 시스템 사양(NVIDIA GPU 유무, VRAM, Python 버전) 반환.
-   - `POST /select-folder`: 브라우저 대신 윈도우 네이티브 폴더 탐색기(`tkinter` 또는 Win32 다이얼로그)를 띄워 사용자가 마우스로 폴더를 안전하게 선택하게 함.
+1. **실행 방식**:
+   - 윈도우 PowerShell 단일 커맨드 실행 또는 경량 바이너리 실행 파일(`plaiground-agent.exe`)을 백그라운드로 구동.
+2. **API 엔드포인트 구성**:
+   - `GET /health`: 에이전트 상태 및 하드웨어 정보(NVIDIA GPU, CUDA 사용 가능 여부, Python 버전) 반환.
+   - `POST /select-folder`: 브라우저 대신 OS 네이티브 폴더 선택 창을 띄워 사용자가 디렉토리를 지정할 수 있도록 지원.
    - `POST /setup`:
-     - 입력: `{ "target_dir": "C:/ai_study", "model_id": "resnet50", "environment": "venv" | "docker" }`
-     - 수행: 폴더 생성 ➔ `python -m venv .venv` ➔ `pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121` (GPU 맞춤) ➔ `train.py` 및 샘플 데이터 복사 ➔ `code <target_dir>` 실행.
-   - `GET /setup-progress`: Server-Sent Events(SSE)로 설치 로그 실시간 브라우저 전송.
+     - 파라미터: `{ "target_dir": "C:/ai_study", "model_id": "resnet50", "environment": "venv" }`
+     - 동작: 지정 경로 생성 ➔ `python -m venv .venv` ➔ PyTorch 및 라이브러리 설치 ➔ `train.py` 및 샘플 데이터 배치 ➔ `code <target_dir>` 실행.
+   - `GET /setup-progress`: Server-Sent Events(SSE)로 설치 진행 상태를 웹 브라우저에 스트리밍.
 
 ---
 
-### 3.2 방식 1: 개발자 및 전공자용 표준 CLI (`pip install plaiground`)
+### 3.2 방식 1: CLI 터미널 도구 (`pip install plaiground`)
 
-터미널에 익숙한 전공생이나 연구원을 위한 가장 깔끔하고 오류 없는 방식입니다.
+터미널 인터페이스를 선호하는 개발자 및 전공자를 위한 표준 배포 방식입니다.
 
-#### 3.2.1 사용자 명령어 흐름
+#### 3.2.1 명령어 구성
 ```bash
-# 1. plAI-ground 도구 설치 (최초 1회)
+# 1. plAI-ground CLI 설치
 pip install plaiground
 
-# 2. 계정 인증 (브라우저가 열리며 1초 만에 로그인 완료)
+# 2. 계정 인증
 plaiground login
 
-# 3. 원하는 모델로 로컬 원클릭 프로젝트 생성
+# 3. 모델 실습 환경 초기화
 plaiground init resnet-cifar10 --dir ./my_first_ai
 ```
 
-#### 3.2.2 CLI 내부 자동화 로직
-1. **하드웨어 자동 감지**:
-   - OS가 Windows, Linux, macOS인지 감지.
-   - NVIDIA GPU 및 드라이버 버전(`nvidia-smi`) 확인.
-   - CUDA가 없을 경우 자동으로 CPU/MPS 최적화 패키지 선택 (사용자가 "CUDA 버전이 안 맞아요"라는 에러를 겪지 않도록 차단).
-2. **가상환경 격리 및 의존성 주입**:
-   - 시스템 파이썬 오염을 막기 위해 대상 디렉토리 내 `.venv` 생성.
-   - 패키지 종속성 자동 설치.
-3. **코드 및 학습 데이터 번들 배치**:
-   - `model.py`, `train.py`, `dataset/` 자동 생성.
-   - plAI-ground 텔레메트리 래퍼 주입:
+#### 3.2.2 내부 실행 로직
+1. **하드웨어 및 런타임 감지**:
+   - OS 종류(Windows, Linux, macOS) 및 Python 버전 확인.
+   - `nvidia-smi` 또는 `torch.cuda.is_available()`를 통해 CUDA 드라이버 유무 확인 후 적합한 PyTorch 버전 선택.
+2. **가상환경 격리**:
+   - 대상 디렉토리 내 `.venv` 생성 및 패키지 설치.
+3. **학습 코드 및 데이터 배치**:
+   - `model.py`, `train.py`, 샘플 데이터셋 디렉토리 배치.
+   - 텔레메트리 로깅 모듈 주입:
      ```python
-     # train.py 상단에 자동 포함
      import plaiground as pg
      tracker = pg.init(project="cifar10-resnet")
      
-     # 에포크마다 3D 시각화 및 무결성 데이터 전송
-     tracker.log(epoch=epoch, loss=loss.item(), acc=acc, weights=model.state_dict())
+     # 에포크별 손실 및 정확도 로깅
+     tracker.log(epoch=epoch, loss=loss.item(), acc=acc)
      ```
-4. **IDE 자동 런치**:
-   - 로컬에 설치된 VS Code 또는 Cursor를 실행하여 즉시 코딩 가능한 상태로 전환.
+4. **IDE 연동**:
+   - 설치 완료 후 `code .` 명령을 통해 VS Code 자동 열기.
 
 ---
 
-### 3.3 방식 2: 무료 구글 코랩(Google Colab) 1줄 연동
+### 3.3 방식 2: Google Colab 1줄 연동
 
-로컬 PC 사양이 낮거나(GPU 없는 사무용 노트북, 맥북 에어), 도커나 가상환경 설치조차 부담스러운 초심자를 위한 궁극의 연동 방식입니다.
+로컬 GPU가 없거나 사양이 부족한 사용자를 위한 방식입니다.
 
-#### 3.3.1 코랩 노트북 셀 구성
+#### 3.3.1 노트북 셀 구성
 ```python
-# [Cell 1] 원클릭 환경 준비 (Google의 무료 T4 GPU 활용)
+# [Cell 1] 라이브러리 설치 및 템플릿 로드
 !pip install -q plaiground
 import plaiground as pg
 
-# 계정 토큰 인증
-pg.auth(token="usr_tok_a8f9c102")
-
-# 원하는 실습 템플릿 로드 (코드, 데이터, 시각화 후크 자동 세팅)
+pg.auth(token="USER_API_TOKEN")
 pg.load_template("diffusion-mnist")
 ```
 
 ```python
-# [Cell 2] 실행 및 학습
-# 백그라운드에서 DiffStack이 코드 수정 이력과 에러 해결 로그를 수집
+# [Cell 2] 학습 실행
 !python train.py
 ```
 
-#### 3.3.2 실행 후 결과
-- 학습 도중 실시간으로 plAI-ground 플랫폼의 ViewAI 3D 시각화 화면으로 그래프와 텐서가 전송됩니다.
-- 학습 종료 시 셀 하단에 클릭 가능한 링크 출력:
-  > **[plAI-ground 무결성 포트폴리오 생성 완료!]**  
-  > 🔗 `https://plaiground.io/p/verify_20261005_cifar10`  
-  > *"Google Colab T4 GPU 환경에서 5에포크 완주, 손실값 0.042 달성, 무결성 검증 완료"*
+#### 3.3.2 동작 방식
+- Colab 환경 내에 템플릿 코드와 샘플 데이터셋이 자동으로 로드됩니다.
+- 학습 진행 중 손실값 및 정확도 데이터가 plAI-ground 웹 플랫폼의 ViewAI 시각화 화면으로 비동기 전송됩니다.
+- 학습 종료 시 포트폴리오 생성 링크(`https://plaiground.io/p/verify_...`)가 출력됩니다.
 
 ---
 
-## 4. 사용자 계정 연동 및 쿼터(Quota) 제어 아키텍처
-
-CLI, 코랩, 웹-로컬 데몬 어디서 실행하든 사용자의 중앙 웹 계정과 완벽하게 연동됩니다.
+## 4. 계정 연동 및 쿼터 관리 아키텍처
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -189,33 +175,32 @@ CLI, 코랩, 웹-로컬 데몬 어디서 실행하든 사용자의 중앙 웹 �
     [CLI Agent]            [Google Colab]           [Web Daemon]
 ```
 
-1. **무료 사용자 (Free Tier)**:
-   - 원클릭 세팅: **무제한 무료**.
-   - 포트폴리오 생성: **5회 무료 크레딧**.
-   - 크레딧 소진 시: 6회차 생성 시도 시 웹/CLI 상에서 *"무료 크레딧 5회를 모두 사용하셨습니다. Pro 플랜(월 9,900원)으로 무제한 포트폴리오를 발행하세요!"* 모달 노출.
+1. **무료 계정 (Free Tier)**:
+   - 원클릭 세팅 기능: 횟수 제한 없이 무료 제공.
+   - 포트폴리오 생성: 5회 무료 제공 (Supabase `usage_credits` 테이블에서 차감).
+   - 크레딧 소진 시: 추가 포트폴리오 생성을 위한 Pro 플랜 결제 안내 모달 표시.
 2. **대학 학과 / KDT 부트캠프 계정**:
-   - 학과 라이선스 키(`CAMPUS_KEY_SNU_AI_2026`) 등록 시 해당 학기 동안 전원 무제한 사용 및 교수 LMS 콘솔로 과제 제출 자동 연동.
+   - 기관 라이선스 키 등록 시 소속 학생들에게 무제한 포트폴리오 생성 및 교수 LMS 모니터링 연동 지원.
 
 ---
 
-## 5. 치팅 방지 및 코드 무결성 검증 엔진 (DiffStack)
+## 5. 코드 무결성 검증 (DiffStack) 구조
 
-단순히 남의 코드를 복사해서 돌린 것인지, 학생이 직접 로컬에서 고민하며 에러를 해결했는지를 판별하는 핵심 기술입니다:
-
-1. **타임스탬프 델타(Delta) 분석**:
-   - ChatGPT에서 한 번에 500줄을 복사해 넣은 코드 vs 1시간 동안 변수를 바꾸고 하이퍼파라미터를 튜닝하며 점진적으로 작성된 코드의 수정 간격(Keystroke/Save interval) 감정.
-2. **런타임 에러 복구 궤적(Traceback Resolution Graph)**:
-   - 훈련 도중 발생한 `RuntimeError: CUDA out of memory`를 배치 사이즈 조절(64 ➔ 32)을 통해 극복한 과정이 기록되어 있을 때 **실무 역량 가산점 부여**.
-3. **위변조 불가 SHA-256 서명**:
-   - 최종 생성된 포트폴리오 하단에 plAI-ground 비밀키로 서명된 무결성 해시 발급. 채용 담당자가 클릭 시 해당 학생의 디버깅 히스토리를 1분 요약 영상/타임라인으로 열람 가능.
+1. **코드 변경 이력 기록**:
+   - 코드 작성 및 수정 시점의 타임스탬프와 파일 변경 내역을 주기적으로 기록하여 외부 단순 복사와 점진적 코드 수정을 구별할 수 있는 데이터 수집.
+2. **실행 및 에러 이력 보존**:
+   - 학습 실행 중 발생한 예외(OOM, 차원 불일치 등)와 수정 후 재실행 내역을 기록하여 실제 디버깅 과정 확인.
+3. **SHA-256 서명 발급**:
+   - 검증된 학습 결과물 및 로그를 기반으로 위변조 방지 해시를 생성하고 포트폴리오 상에 인증 뱃지로 표기.
 
 ---
 
-## 6. 최종 개발 우선순위 및 로드맵
-1. **스프린트 1 (1~2주차)**: 
-   - CLI 도구(`pip install plaiground`) 배포 및 템플릿 다운로드 엔진 완성.
-   - Google Colab 연동 1줄 템플릿 로더 구축.
-2. **스프린트 2 (3~4주차)**: 
-   - 기존 `ai_set_demo`를 웹-로컬 브릿지 데몬(`127.0.0.1:8765`)으로 고도화하여 웹 화면에서 [폴더 선택] ➔ [로컬 원클릭 세팅] 연동 완성.
-3. **스프린트 3 (5주차)**: 
-   - Supabase 쿼터 제어(무료 5회) 및 Pro 구독 결제(토스페이먼츠/Stripe 연동) 모달 결합.
+## 6. 개발 단계별 구현 계획
+1. **1단계**:
+   - CLI 도구(`pip install plaiground`) 패키징 및 템플릿 배포 로직 구현.
+   - Google Colab 연동 템플릿 로더 개발.
+2. **2단계**:
+   - 기존 `ai_set_demo/api_server.py` 로직을 기반으로 로컬 데몬(`127.0.0.1:8765`) 및 웹 브라우저 간 통신 연동.
+   - 웹 UI에서 디렉토리 선택 및 설치 진행률 스트리밍 구현.
+3. **3단계**:
+   - Supabase 기반 5회 무료 쿼터 관리 및 B2C Pro 결제 모달 연동.
