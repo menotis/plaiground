@@ -174,28 +174,35 @@ export default function StartAI({ go, onSession, addToast }) {
         </div>
       </div>
 
-      {/* 스텝 인디케이터 (3단계 구조) */}
-      <ol className="mt-7 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      {/* 스텝 인디케이터 — 단일 직사각형 테두리 안에서 | 막대로 구분 (위아래 살짝 띄움) */}
+      <nav aria-label="단계 진행" className="mt-7 rounded-lg border border-line bg-pit/50 p-1 flex items-stretch">
         {STEPS.map((label, idx) => {
           const n = idx + 1;
           const state = step === n ? 'current' : step > n ? 'done' : 'todo';
           return (
-            <li
-              key={label}
-              aria-current={state === 'current' ? 'step' : undefined}
-              className={`rounded-full px-5 py-2.5 text-center text-[13px] font-medium transition-all ${
-                state === 'current'
-                  ? 'bg-ink text-void shadow-sm'
-                  : state === 'done'
-                    ? 'bg-mint/15 text-mint border border-mint/30'
-                    : 'border border-line text-dim'
-              }`}
-            >
-              {n}. {label}
-            </li>
+            <div key={label} className="flex-1 flex items-center">
+              <button
+                type="button"
+                onClick={() => { if (step > n) setStep(n); }}
+                disabled={step < n}
+                aria-current={state === 'current' ? 'step' : undefined}
+                className={`w-full py-2.5 px-4 rounded-md text-center text-[13px] font-medium transition-all ${
+                  state === 'current'
+                    ? 'bg-ink text-void font-semibold shadow-sm'
+                    : state === 'done'
+                      ? 'text-mint hover:bg-white/[0.04] cursor-pointer'
+                      : 'text-dim cursor-default'
+                }`}
+              >
+                {n}. {label}
+              </button>
+              {idx < STEPS.length - 1 && (
+                <span className="w-px h-4 bg-white/15 my-auto shrink-0" aria-hidden="true" />
+              )}
+            </div>
           );
         })}
-      </ol>
+      </nav>
 
       {/* STEP 1 — 하드웨어 및 런타임 진단 */}
       {step === 1 && (
