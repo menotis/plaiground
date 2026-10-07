@@ -5,11 +5,9 @@ import {
   Cpu,
   Loader2,
   Search,
-  Sparkles,
   Terminal,
   X,
   XCircle,
-  Zap,
 } from 'lucide-react';
 import { api } from './api.js';
 import IdeConnectHub from './IdeConnectHub.jsx';
@@ -230,20 +228,17 @@ export default function StartAI({ go, onSession, addToast }) {
           </div>
 
           {/* 안내 배너 */}
-          <div className="p-4 rounded-lg bg-gold/5 border border-gold/20 flex items-start gap-3 text-[13px] text-mist leading-relaxed">
-            <Sparkles className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-            <div>
-              <span className="font-semibold text-ink">로컬 GPU 가속 & Colab 클라우드 동시 지원: </span>
-              외장 GPU가 장착된 데스크톱뿐만 아니라, MacBook이나 사무용 노트북에서도 Google Colab 무료 T4 GPU로 1줄 실행이 가능합니다.
-            </div>
+          <div className="p-4 rounded-lg bg-gold/5 border border-gold/15 text-[13px] text-mist leading-relaxed">
+            <span className="font-semibold text-ink">로컬 GPU 가속 & Colab 클라우드 동시 지원: </span>
+            외장 GPU가 장착된 데스크톱뿐만 아니라, MacBook이나 사무용 노트북에서도 Google Colab 무료 T4 GPU로 1줄 실행이 가능합니다.
           </div>
 
           <div className="flex justify-end pt-2">
             <button
               onClick={() => setStep(2)}
-              className="px-7 py-3 rounded-full bg-ink text-void text-[14px] font-semibold hover:bg-white transition-colors flex items-center gap-2"
+              className="px-7 py-3 rounded-full bg-ink text-void text-[14px] font-semibold hover:bg-white transition-colors"
             >
-              모델 선택으로 <ArrowRight className="w-4 h-4" />
+              모델 선택으로 →
             </button>
           </div>
         </div>
@@ -344,9 +339,9 @@ export default function StartAI({ go, onSession, addToast }) {
             <button
               onClick={handleSelectModel}
               disabled={!selected}
-              className="px-7 py-3 rounded-full bg-gold text-void text-[14px] font-semibold hover:brightness-110 transition-all disabled:opacity-40 flex items-center gap-2"
+              className="px-7 py-3 rounded-full bg-gold text-void text-[14px] font-semibold hover:brightness-110 transition-all disabled:opacity-40"
             >
-              <Zap className="w-4 h-4" /> IDE 연결 허브 열기
+              IDE 연결 허브 열기
             </button>
           </div>
         </div>

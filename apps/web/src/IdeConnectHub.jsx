@@ -1,30 +1,20 @@
-import { useId, useMemo, useState } from 'react';
-import {
-  ArrowLeft,
-  ArrowRight,
-  Bot,
-  Check,
-  CheckCircle2,
-  Code2,
-  Copy,
-  Cpu,
-  ExternalLink,
-  Laptop,
-  Terminal,
-  X,
-} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Check, Copy, X } from 'lucide-react';
 
 // ─── IDE Connect Hub — 옴니채널 네이티브 IDE 연동 허브 ───────────────────────────
-// 브라우저 iframe Web IDE를 전면 폐기하고, 사용자의 데스크톱 IDE(VS Code, Cursor,
-// Antigravity) 및 Google Colab과 1줄 명령어(plaiground pull)로 직접 연동합니다.
-// apps/web/DESIGN.md 의 시각 시스템(The Liquid Ledger)과 안티-AI-슬롭 규칙을 엄격히 준수합니다.
+// 데스크톱 IDE(VS Code, Cursor, Antigravity, Codex) 맞춤 1줄 명령어 연동.
+// 안티-AI-슬롭(Anti-AI-Slop) 절대 원칙:
+// 1. 내부 테두리(Border) 전면 최소화: 기본 무테두리, 마우스 hover 및 active 클릭 시에만 테두리 발현.
+// 2. 텍스트/설명 옆 불필요한 이모지(💡, ✨ 등) 및 제네릭 아이콘 일체 배제.
+// 3. 실제 브랜드 에셋 이미지(/assets/icons/*.png) 사용.
 
 const CHANNELS = [
   {
     id: 'vscode',
     name: 'VS Code',
     badge: 'Desktop Native',
-    icon: Code2,
+    iconSrc: '/assets/icons/vscode.png',
+    invert: false,
     tagline: '가장 널리 쓰이는 표준 개발 환경',
     getCommand: (code) => `plaiground pull ${code}`,
     steps: [
@@ -38,13 +28,14 @@ const CHANNELS = [
     id: 'cursor',
     name: 'Cursor',
     badge: 'AI Native',
-    icon: Laptop,
+    iconSrc: '/assets/icons/cursor.png',
+    invert: true,
     tagline: 'AI 어시스턴트 페어 프로그래밍',
     getCommand: (code) => `plaiground pull ${code}`,
     steps: [
-      { num: '01', title: 'Cursor 터미널 열기', desc: '내장 터미널에서 plaiground pull 명령어를 붙여넣고 엔터를 누릅니다.' },
-      { num: '02', title: 'Composer AI 튜닝', desc: 'Ctrl + I (Composer)를 열어 하이퍼파라미터 및 손실 함수 구조를 튜닝합니다.' },
-      { num: '03', title: '학습 및 실시간 인터셉트', desc: 'CUDA OOM이나 오류 발생 시 디버깅 이력이 포트폴리오에 자동 기록됩니다.' },
+      { num: '01', title: 'Cursor 터미널 열기', desc: '내장 터미널에서 plaiground pull 명령어를 붙여넣고 실행합니다.' },
+      { num: '02', title: 'Composer AI 튜닝', desc: 'Ctrl + I (Composer)를 열어 모델 구조 및 하이퍼파라미터를 AI와 튜닝합니다.' },
+      { num: '03', title: '학습 및 자동 인터셉트', desc: 'CUDA OOM이나 오류 발생 시 디버깅 이력이 포트폴리오에 자동 기록됩니다.' },
     ],
     note: 'AI 에디터와의 협업 디버깅 과정 전체가 타임스탬프와 함께 검증형 원장에 영구 보존됩니다.',
   },
@@ -52,7 +43,8 @@ const CHANNELS = [
     id: 'antigravity',
     name: 'Antigravity',
     badge: 'Agentic AI',
-    icon: Bot,
+    iconSrc: '/assets/icons/antigravity.png',
+    invert: false,
     tagline: 'DeepMind Antigravity 자율 에이전트',
     getCommand: (code) => `npx skills add plaiground/skills && plaiground pull ${code}`,
     steps: [
@@ -63,20 +55,19 @@ const CHANNELS = [
     note: '에이전트와의 질의응답 및 실험 반복 로그가 웹 대시보드와 즉시 동기화됩니다.',
   },
   {
-    id: 'colab',
-    name: 'Google Colab',
-    badge: 'Cloud GPU (Free T4)',
-    icon: ExternalLink,
-    tagline: '로컬 GPU가 없는 Mac·노트북 환경',
-    getCommand: (code) => `!pip install plaiground && plaiground pull ${code}`,
+    id: 'codex',
+    name: 'Codex',
+    badge: 'CLI Agent',
+    iconSrc: '/assets/icons/codex.png',
+    invert: true,
+    tagline: '명령어 기반 자율 코딩 에이전트',
+    getCommand: (code) => `plaiground pull ${code}`,
     steps: [
-      { num: '01', title: 'Colab 새 노트북 열기', desc: '상단 메뉴 [런타임] ➔ [런타임 유형 변경]에서 T4 GPU를 선택합니다.' },
-      { num: '02', title: '1줄 명령 셀 실행', desc: '첫 번째 코드 셀에 1줄 명령어를 붙여넣고 Shift + Enter로 실행합니다.' },
-      { num: '03', title: '클라우드 GPU 학습', desc: '%run train.py 로 구글 클라우드 인프라에서 고속 학습을 시작합니다.' },
+      { num: '01', title: '터미널 워크스페이스 세팅', desc: '터미널에서 1줄 명령어를 실행하여 Codex 워크스페이스를 구성합니다.' },
+      { num: '02', title: '에이전트 코드 검토', desc: 'Codex CLI를 통해 하이퍼파라미터 및 가상환경 상태를 자동 점검합니다.' },
+      { num: '03', title: '학습 및 텔레메트리 스트리밍', desc: 'python train.py 실행 후 실시간 손실 곡선과 가중치를 모니터링합니다.' },
     ],
-    linkUrl: 'https://colab.research.google.com/#create=true',
-    linkLabel: 'Colab 새 노트북 열기',
-    note: '설치 없이 브라우저 환경에서 동일한 레시피 코드로 실습을 즉시 진행할 수 있습니다.',
+    note: '명령어 기반 자율 에이전트 환경에서 실시간 텔레메트리가 웹 대시보드로 자동 스트리밍됩니다.',
   },
 ];
 
@@ -93,7 +84,7 @@ export default function IdeConnectHub({
   const [copiedCmd, setCopiedCmd] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
 
-  // 고유 레시피 코드 생성 (props 전달 시 우선 적용, 없으면 모델 ID 기반 고유 토큰 생성)
+  // 고유 레시피 코드 생성
   const defaultCode = useMemo(() => {
     if (propRecipeCode) return propRecipeCode;
     const prefix = (model?.model_id?.split('-')[0] || 'PLAI').toUpperCase().slice(0, 4);
@@ -108,7 +99,7 @@ export default function IdeConnectHub({
   const copyCommand = () => {
     navigator.clipboard?.writeText(command);
     setCopiedCmd(true);
-    addToast?.('1줄 터미널 명령어가 클립보드에 복사되었습니다.');
+    addToast?.('1줄 터미널 명령어가 복사되었습니다.');
     setTimeout(() => setCopiedCmd(false), 2200);
   };
 
@@ -120,17 +111,16 @@ export default function IdeConnectHub({
   };
 
   const content = (
-    <div className="space-y-7">
+    <div className="space-y-6">
       {/* ── 상단 헤더: 모델 정보 & 고유 레시피 토큰 ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-line">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-white/[0.06]">
         <div>
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <h2 className="font-display font-bold text-xl md:text-2xl text-ink tracking-tight">
               IDE Connect Hub
             </h2>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-mint/10 border border-mint/20 text-mint font-mono text-[11px] tracking-wide">
-              <span className="w-1.5 h-1.5 rounded-full bg-mint animate-pulse" />
-              SYNC READY
+            <span className="px-2 py-0.5 rounded bg-white/[0.04] text-mint font-mono text-[11px] tracking-wider">
+              [SYNC READY]
             </span>
           </div>
           <p className="mt-1.5 text-[14px] text-mist leading-relaxed">
@@ -147,8 +137,8 @@ export default function IdeConnectHub({
           </p>
         </div>
 
-        {/* 고유 레시피 토큰 카드 (The Liquid Ledger Gold Proof) */}
-        <div className="flex items-center gap-3 bg-pit/80 px-4 py-2.5 rounded-lg border border-line self-start md:self-auto">
+        {/* 고유 레시피 토큰 카드 (내부 테두리 최소화: hover 시에만 테두리 발현) */}
+        <div className="flex items-center gap-3 bg-white/[0.02] hover:bg-white/[0.05] px-4 py-2.5 rounded-lg border border-transparent hover:border-white/10 transition-colors self-start md:self-auto">
           <div className="text-left">
             <span className="block font-mono text-[10px] tracking-widest text-dim uppercase">Recipe Token</span>
             <span className="font-mono font-bold text-[15px] text-gold tracking-wider">{recipeCode}</span>
@@ -156,22 +146,21 @@ export default function IdeConnectHub({
           <button
             onClick={copyToken}
             title="레시피 토큰 복사"
-            className="p-2 rounded-md hover:bg-white/10 text-mist hover:text-ink transition-colors flex items-center gap-1"
+            className="p-1.5 rounded hover:bg-white/10 text-mist hover:text-ink transition-colors flex items-center gap-1"
           >
-            {copiedToken ? <Check className="w-4 h-4 text-mint" /> : <Copy className="w-4 h-4" />}
+            {copiedToken ? <Check className="w-3.5 h-3.5 text-mint" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
 
-      {/* ── IDE 채널 선택 탭 (4대 옴니채널) ── */}
+      {/* ── IDE 채널 선택 탭 (4대 옴니채널 — 평상시 무테두리, hover/active 시에만 테두리) ── */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2.5">
           <span className="font-mono text-[11px] tracking-wider text-dim uppercase">Select Target IDE</span>
           <span className="text-[12px] text-mist">{channel.tagline}</span>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
           {CHANNELS.map((c) => {
-            const Icon = c.icon;
             const active = activeChannelId === c.id;
             return (
               <button
@@ -179,13 +168,17 @@ export default function IdeConnectHub({
                 onClick={() => setActiveChannelId(c.id)}
                 className={`flex flex-col text-left p-3.5 rounded-lg transition-all ${
                   active
-                    ? 'bg-white/8 border border-white/20 text-ink shadow-[0_0_20px_rgba(255,255,255,0.03)]'
-                    : 'bg-pit/40 border border-line text-mist hover:bg-white/[0.03] hover:text-ink'
+                    ? 'bg-white/[0.07] border border-white/20 text-ink shadow-[0_0_15px_rgba(255,255,255,0.02)]'
+                    : 'bg-white/[0.015] border border-transparent text-mist hover:bg-white/[0.04] hover:border-white/10 hover:text-ink'
                 }`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="font-display font-semibold text-[15px] flex items-center gap-2">
-                    <Icon className={`w-4 h-4 ${active ? 'text-gold' : 'text-dim'}`} />
+                  <span className="font-display font-semibold text-[15px] flex items-center gap-2.5">
+                    <img
+                      src={c.iconSrc}
+                      alt=""
+                      className={`w-4 h-4 object-contain ${c.invert ? 'brightness-0 invert' : ''}`}
+                    />
                     {c.name}
                   </span>
                   {active && <span className="w-1.5 h-1.5 rounded-full bg-gold" />}
@@ -198,11 +191,11 @@ export default function IdeConnectHub({
       </div>
 
       {/* ── 메인 바디: 터미널 명령 블록 (좌) vs 실행 단계 가이드 (우) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         {/* 좌측 (7 cols): 터미널 콘솔 & 1줄 복사 */}
-        <div className="lg:col-span-7 flex flex-col justify-between rounded-lg border border-line bg-pit/70 overflow-hidden">
+        <div className="lg:col-span-7 flex flex-col justify-between rounded-lg bg-void/60 border border-transparent hover:border-white/10 transition-colors overflow-hidden">
           {/* 터미널 상단 바 */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-line bg-void/50">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.04] bg-void/80">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-ember/70" />
               <span className="w-2.5 h-2.5 rounded-full bg-gold/70" />
@@ -215,8 +208,8 @@ export default function IdeConnectHub({
           {/* 터미널 본문 */}
           <div className="p-5 font-mono text-[13px] leading-relaxed flex-1 flex flex-col justify-center">
             <p className="text-dim select-none"># 1. 원하는 디렉토리에서 아래 1줄 명령어를 실행하세요</p>
-            <div className="mt-2.5 p-3.5 rounded bg-void border border-line/60 flex items-center justify-between gap-3 group">
-              <span className="text-ink break-all select-all font-mono">
+            <div className="mt-2.5 p-3.5 rounded bg-void text-ink font-mono text-[13px] border border-transparent hover:border-white/10 transition-colors">
+              <span className="break-all select-all">
                 <span className="text-gold select-none">$ </span>
                 {command}
               </span>
@@ -226,25 +219,20 @@ export default function IdeConnectHub({
             </p>
           </div>
 
-          {/* 터미널 푸터: 복사 버튼 (Two Stages Rule: ink pill) */}
-          <div className="px-5 py-3.5 border-t border-line bg-void/30 flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              {channel.linkUrl && (
-                <a
-                  href={channel.linkUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-4 py-2 rounded-full border border-line text-[13px] text-mist hover:text-ink hover:border-white/20 transition-colors flex items-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  {channel.linkLabel}
-                </a>
-              )}
-            </div>
+          {/* 터미널 푸터: 복사 버튼 & Colab 보조 링크 */}
+          <div className="px-5 py-3 border-t border-white/[0.04] bg-void/30 flex items-center justify-between gap-3 flex-wrap">
+            <a
+              href="https://colab.research.google.com/#create=true"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[12px] text-dim hover:text-mist hover:underline underline-offset-4 transition-colors"
+            >
+              로컬 GPU가 없으신가요? Colab에서 열기 ↗
+            </a>
 
             <button
               onClick={copyCommand}
-              className="px-6 py-2.5 rounded-full bg-ink text-void text-[13px] font-semibold hover:bg-white transition-all flex items-center gap-2 shadow-sm"
+              className="px-6 py-2.5 rounded-full bg-ink text-void text-[13px] font-semibold hover:bg-white transition-all flex items-center gap-2"
             >
               {copiedCmd ? (
                 <>
@@ -261,17 +249,16 @@ export default function IdeConnectHub({
           </div>
         </div>
 
-        {/* 우측 (5 cols): 3단계 실행 가이드 & 안내 */}
-        <div className="lg:col-span-5 flex flex-col justify-between rounded-lg border border-line bg-pit/40 p-5 space-y-4">
+        {/* 우측 (5 cols): 3단계 실행 가이드 & 안내 (무테두리 + 순수 텍스트) */}
+        <div className="lg:col-span-5 flex flex-col justify-between rounded-lg bg-white/[0.015] p-5 border border-transparent hover:border-white/10 transition-colors space-y-4">
           <div>
-            <h3 className="font-display font-semibold text-[15px] text-ink flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-cobalt" />
+            <h3 className="font-display font-semibold text-[15px] text-ink">
               로컬 실행 가이드 (3 Steps)
             </h3>
             <ol className="mt-4 space-y-3.5">
               {channel.steps.map((st) => (
                 <li key={st.num} className="flex items-start gap-3 text-left">
-                  <span className="font-mono text-[12px] text-gold font-bold px-1.5 py-0.5 rounded bg-gold/10 shrink-0">
+                  <span className="font-mono text-[11px] text-gold font-bold px-1.5 py-0.5 rounded bg-gold/10 shrink-0">
                     {st.num}
                   </span>
                   <div>
@@ -283,44 +270,36 @@ export default function IdeConnectHub({
             </ol>
           </div>
 
-          <div className="pt-3 border-t border-line text-[12px] text-mist leading-relaxed">
-            <p className="flex items-start gap-1.5">
-              <span className="text-gold">💡</span>
-              <span>{channel.note}</span>
-            </p>
+          <div className="pt-3 border-t border-white/[0.04] text-[12px] text-dim leading-relaxed">
+            <p>{channel.note}</p>
           </div>
         </div>
       </div>
 
-      {/* ── 하단 액션 & 텔레메트리 연동 배너 ── */}
-      <div className="p-4 rounded-lg bg-white/[0.02] border border-line flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-cobalt/15 flex items-center justify-center shrink-0">
-            <Cpu className="w-4 h-4 text-cobalt" />
-          </div>
-          <div>
-            <p className="text-[13px] font-medium text-ink">실시간 3D 텐서 시각화 및 학습 모니터링</p>
-            <p className="text-[12px] text-dim">
-              로컬 터미널에서 학습이 시작되면 View AI 화면에서 손실 곡선과 가중치가 실시간 스트리밍됩니다.
-            </p>
-          </div>
+      {/* ── 하단 액션 & 텔레메트리 연동 배너 (무테두리 + 순수 텍스트) ── */}
+      <div className="p-4 rounded-lg bg-white/[0.015] border border-transparent hover:border-white/10 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-[13px] font-medium text-ink">실시간 3D 텐서 시각화 및 학습 모니터링</p>
+          <p className="text-[12px] text-dim mt-0.5">
+            로컬 터미널에서 학습이 시작되면 View AI 화면에서 손실 곡선과 가중치가 실시간 스트리밍됩니다.
+          </p>
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
           {onBack && (
             <button
               onClick={onBack}
-              className="px-5 py-2.5 rounded-full border border-line text-[13px] text-mist hover:text-ink hover:border-white/20 transition-colors flex items-center gap-1.5"
+              className="px-5 py-2 rounded-full bg-white/[0.03] hover:bg-white/[0.06] text-[13px] text-mist hover:text-ink transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> 모델 다시 선택
+              모델 다시 선택
             </button>
           )}
           {go && (
             <button
               onClick={() => go('view')}
-              className="px-5 py-2.5 rounded-full bg-white/6 hover:bg-white/10 text-[13px] font-medium text-ink transition-colors flex items-center gap-1.5"
+              className="px-5 py-2 rounded-full bg-white/[0.06] hover:bg-white/10 text-[13px] font-medium text-ink transition-colors"
             >
-              View AI 모니터링 열기 <ArrowRight className="w-3.5 h-3.5" />
+              View AI 모니터링 열기 →
             </button>
           )}
         </div>
@@ -331,7 +310,7 @@ export default function IdeConnectHub({
   if (isModal) {
     return (
       <div className="fixed inset-0 z-50 bg-void/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-        <div className="max-w-4xl w-full glass-card rounded-xl border border-line bg-pit/95 p-6 md:p-8 relative shadow-2xl animate-rise">
+        <div className="max-w-4xl w-full rounded-xl border border-white/10 bg-pit/95 p-6 md:p-8 relative shadow-2xl animate-rise">
           {onClose && (
             <button
               onClick={onClose}
@@ -348,7 +327,7 @@ export default function IdeConnectHub({
   }
 
   return (
-    <div className="glass-card rounded-xl border border-line bg-pit/40 p-6 md:p-8 animate-rise">
+    <div className="rounded-xl border border-white/10 bg-pit/50 p-6 md:p-8 animate-rise">
       {content}
     </div>
   );
