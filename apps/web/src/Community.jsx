@@ -4,11 +4,12 @@ import {
   AlertCircle, ArrowLeft, Bookmark, Bug, Database, Eye, ExternalLink, FlaskConical,
   Loader2, MessageCircle, MessageCircleQuestion, Play, Search, Send, ThumbsUp, X,
 } from 'lucide-react';
+import IdeConnectHub from './IdeConnectHub.jsx';
 
 // ─── 커뮤니티 — community_demo 백엔드 연동 ────────────────────────────────────
 // 글 목록/상세/댓글/추천/조회/즐겨찾기는 /api/community/* 를 실제로 호출한다.
 // 글은 오버레이가 아니라 해시 라우트(#/community/<id>)를 가진 실제 페이지로 열린다.
-// '실습해보기'는 글의 코드를 var/generated/에 스테이징하고 Web IDE로 이동.
+// '실습해보기'는 레시피 코드로 IDE Connect Hub를 열어 로컬 IDE 또는 Colab에서 실행.
 
 const CATEGORIES = ['전체', '오류해결', '학습 결과', 'Q&A', '데이터 정보'];
 
@@ -245,6 +246,7 @@ export default function Community({ go, postId, onStaged, addToast }) {
   const [bookmarked, setBookmarked] = useState(() => new Set());
   const [viewed, setViewed] = useState(() => new Set());
   const [practicing, setPracticing] = useState(false);
+  const [connectPost, setConnectPost] = useState(null);
 
   useEffect(() => {
     api('/api/community/posts')
@@ -286,22 +288,8 @@ export default function Community({ go, postId, onStaged, addToast }) {
   }, [postId, posts, viewed, interact]);
 
   const practice = useCallback((post) => {
-    setPracticing(true);
-    api('/api/community/practice', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ post_id: post.id }),
-    })
-      .then((r) => r.json())
-      .then((payload) => {
-        if (payload.error) throw new Error(payload.error);
-        onStaged?.(payload);
-        addToast?.(`실습 코드가 준비되었습니다 — ${payload.script_path}`);
-        go('ide');
-      })
-      .catch((e) => addToast?.(`실습 준비 실패: ${e.message}`))
-      .finally(() => setPracticing(false));
-  }, [onStaged, addToast, go]);
+    setConnectPost(post);
+  }, []);
 
   const filtered = useMemo(() => {
     if (!posts) return [];
@@ -344,17 +332,28 @@ export default function Community({ go, postId, onStaged, addToast }) {
       );
     }
     return (
-      <PostPage
-        post={currentPost}
-        liked={liked.has(currentPost.id)}
-        bookmarked={bookmarked.has(currentPost.id)}
-        onToggle={toggle}
-        onPractice={practice}
-        practicing={practicing}
-        onBack={() => go('community')}
-        onTag={(t) => { setQ(`#${t}`); go('community'); }}
-        addToast={addToast}
-      />
+      <>
+        <PostPage
+          post={currentPost}
+          liked={liked.has(currentPost.id)}
+          bookmarked={bookmarked.has(currentPost.id)}
+          onToggle={toggle}
+          onPractice={practice}
+          practicing={practicing}
+          onBack={() => go('community')}
+          onTag={(t) => { setQ(`#${t}`); go('community'); }}
+          addToast={addToast}
+        />
+        {connectPost && (
+          <IdeConnectHub
+            recipeCode={`POST-${connectPost.id}`}
+            isModal
+            onClose={() => setConnectPost(null)}
+            go={go}
+            addToast={addToast}
+          />
+        )}
+      </>
     );
   }
 
@@ -370,7 +369,7 @@ export default function Community({ go, postId, onStaged, addToast }) {
           <p className="mt-2 text-sm text-mist leading-relaxed max-w-xl">
             오류 해결 기록, 학습 결과, 데이터 정보를 나누는 공간입니다. 글과 수치는 데모용
             시드이지만 인용된 데이터셋·출처·코드는 모두 실재하며, 실습해보기 버튼으로
-            Web IDE 워크스페이스에 바로 가져올 수 있습니다.
+            내 PC의 IDE(VS Code, Cursor 등)나 Colab에서 바로 실습해볼 수 있습니다.
           </p>
         </div>
         {/* 검색 — #태그 또는 키워드 */}
@@ -482,6 +481,16 @@ export default function Community({ go, postId, onStaged, addToast }) {
           </article>
         ))}
       </div>
+
+      {connectPost && (
+        <IdeConnectHub
+          recipeCode={`POST-${connectPost.id}`}
+          isModal
+          onClose={() => setConnectPost(null)}
+          go={go}
+          addToast={addToast}
+        />
+      )}
     </div>
   );
 }

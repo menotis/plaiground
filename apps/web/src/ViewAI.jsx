@@ -331,7 +331,7 @@ export default function ViewAI({ addToast }) {
         <div className="mt-12">
           <p className="text-xl font-medium">아직 기록된 학습이 없습니다.</p>
           <p className="mt-3 text-[16px] text-mist leading-relaxed">
-            Start AI에서 <span className="text-ink">mnist-cnn-lite</span>를 세팅하고 Web IDE에서 학습을 실행하면
+            Start AI에서 <span className="text-ink">mnist-cnn-lite</span>를 세팅하고 로컬 IDE 또는 Colab에서 학습을 실행하면
             <code className="font-mono text-[15px] text-ink"> var/telemetry/viz/&lt;run_id&gt;/</code>에 스텝별 가중치가 저장되고 여기서 재생됩니다.
           </p>
         </div>

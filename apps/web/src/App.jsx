@@ -4,7 +4,6 @@ import { ArrowUpRight, Check, GraduationCap, LogOut, ShieldCheck, X } from 'luci
 import { supabase } from './supabase.js';
 import { setAccessTokenGetter } from './api.js';
 import StartAI from './StartAI.jsx';
-import IdeView from './IdeView.jsx';
 import ViewAI from './ViewAI.jsx';
 import PortfolioView from './PortfolioView.jsx';
 import Lms from './Lms.jsx';
@@ -127,7 +126,6 @@ function LoginMenu({ profile, onLogin, onLogout }) {
 // ─── 공통 상단 바 — 랜딩·콘솔 모든 페이지에서 동일한 형태 ─────────────────────
 const BASE_TABS = [
   { id: 'start', label: 'Start AI' },
-  { id: 'ide', label: 'Web IDE' },
   { id: 'view', label: 'View AI' },
   { id: 'portfolio', label: 'Portfolio' },
   { id: 'community', label: 'Community' },
@@ -258,13 +256,12 @@ function Landing({ go, profile, onLogin, onLogout }) {
           {[
             {
               id: 'start', title: 'One-Click GPU Lab',
-              desc: 'Docker 데몬·베이스 이미지·로컬 GPU를 자동 감지하고, 모델을 고르면 학습 코드 생성과 컨테이너 기동까지 실제 파이프라인이 돌아갑니다.',
+              desc: '하드웨어와 GPU를 자동 진단하고, 모델을 고르면 데스크톱 IDE(VS Code, Cursor)와 1줄로 연동되는 초고속 가상환경이 빌드됩니다.',
               preview: (
                 <div className="font-mono text-[11.5px] leading-6 text-mist">
-                  <p><span className="text-cobalt">[1/4]</span> Docker · plaiground-base:dev 확인</p>
-                  <p><span className="text-cobalt">[2/4]</span> ModelCatalog → klue-bert-finetune</p>
-                  <p><span className="text-cobalt">[3/4]</span> train 스크립트 생성 및 마운트</p>
-                  <p><span className="text-mint">[4/4]</span> code-server 기동 <span className="text-mint">READY</span></p>
+                  <p><span className="text-cobalt">[1/3]</span> 로컬 GPU & uv 엔진 감지</p>
+                  <p><span className="text-cobalt">[2/3]</span> ModelCatalog → klue-bert-finetune</p>
+                  <p><span className="text-mint">[3/3]</span> IDE Connect Hub <span className="text-mint">READY</span></p>
                 </div>
               ),
             },
@@ -310,8 +307,8 @@ function Landing({ go, profile, onLogin, onLogout }) {
           <ol className="mt-14 grid grid-cols-1 lg:grid-cols-4 gap-y-10 lg:gap-y-0">
             {[
               ['모델 선택', 'ModelCatalog에서 과제에 맞는 모델과 데이터셋을 고릅니다.'],
-              ['환경 세팅', 'Docker 컨테이너와 학습 스크립트가 자동으로 준비됩니다.'],
-              ['IDE에서 직접 학습', 'code-server 터미널에서 코드를 고치고 실행합니다. 에러는 자동 수집.'],
+              ['환경 세팅', 'uv 기반 초고속 가상환경과 PyTorch 2.14.1이 자동 빌드됩니다.'],
+              ['IDE 연동 및 실행', 'VS Code·Cursor·Colab에서 1줄 명령으로 환경 빌드 후 직접 실행. 에러는 자동 수집.'],
               ['포트폴리오 발급', '텔레메트리가 검증형 포트폴리오 HTML로 렌더링됩니다.'],
             ].map(([title, desc], i, arr) => (
               <li key={title} className="relative lg:pr-8">
@@ -434,7 +431,7 @@ export default function App() {
   // #/community/err-001 처럼 두 번째 세그먼트는 화면 파라미터(게시글 id 등)다.
   const [viewParam, setViewParam] = useState(null);
   useEffect(() => {
-    const VIEWS = ['landing', 'start', 'ide', 'view', 'portfolio', 'community', 'lms'];
+    const VIEWS = ['landing', 'start', 'view', 'portfolio', 'community', 'lms'];
     const apply = () => {
       const [v, param] = window.location.hash.replace(/^#\/?/, '').split('/');
       setView(VIEWS.includes(v) ? v : 'landing');
@@ -512,7 +509,6 @@ export default function App() {
         ) : (
           <ConsoleShell view={effectiveView} go={go} profile={profile} onLogin={login} onLogout={logout}>
             {effectiveView === 'start' && <StartAI go={go} onSession={setSession} addToast={addToast} />}
-            {effectiveView === 'ide' && <IdeView session={session} staged={staged} go={go} addToast={addToast} />}
             {effectiveView === 'community' && <Community go={go} postId={viewParam} onStaged={setStaged} addToast={addToast} />}
             {effectiveView === 'view' && <ViewAI addToast={addToast} />}
             {effectiveView === 'portfolio' && <PortfolioView addToast={addToast} />}

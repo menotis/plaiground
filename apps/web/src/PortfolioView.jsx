@@ -339,7 +339,7 @@ export default function PortfolioView({ addToast }) {
             <p className="mt-2 font-mono text-[13px] text-dim">
               {telemetry.exists
                 ? <>생성 소스 · <span className="text-mist">{telemetry.overview?.project_name || '이름 없는 학습'}</span>{telemetry.run_id && <span className="text-gold"> · {telemetry.run_id}</span>}{telemetry.saved_at && ` · 저장 ${telemetry.saved_at.slice(0, 16).replace('T', ' ')}`}</>
-                : '생성 소스 · 아직 학습 텔레메트리가 없습니다 — Web IDE에서 학습을 먼저 실행하세요'}
+                : '생성 소스 · 아직 학습 텔레메트리가 없습니다 — 로컬 IDE 또는 Colab에서 학습을 먼저 실행하세요'}
             </p>
           )}
         </div>

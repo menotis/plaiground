@@ -207,16 +207,16 @@ Week 4: 커뮤니티 Fork & Run 및 MCP/Skills 에이전트 패키징
 ### 단계별 상세 작업 체크리스트
 
 #### Phase 1: 코어 파이썬 패키지 (`plaiground`)
-- [ ] `gpu_detector.py`: `nvidia-smi` 기반 아키텍처(CC) 및 드라이버 버전 파싱 로직 구현.
-- [ ] Group A(`cu126`) / Group B(`cu130`) / CPU 자동 분기 `uv venv` 빌더 구현.
-- [ ] CLI 커맨드라인 인터페이스 구축 (`plaiground init`, `plaiground pull`, `plaiground fork`).
+- [x] `gpu_detector.py`: `nvidia-smi` 기반 아키텍처(CC) 및 드라이버 버전 파싱 로직 구현.
+- [x] Group A(`cu126`) / Group B(`cu130`) / CPU 자동 분기 `uv venv` 빌더 구현.
+- [x] CLI 커맨드라인 인터페이스 구축 (`plaiground init`, `plaiground pull`, `plaiground fork`).
 - [ ] `telemetry.py`: 학습 손실값 및 가중치 통계 요약 경량 송신 모듈 구현.
 
 #### Phase 2: 프론트엔드 개편 (`apps/web`)
-- [ ] `IdeView.jsx` 파일 및 관련 라우팅 전면 제거.
-- [ ] `apps/web/DESIGN.md` 준수 검증: 골드/코발트/민트/엠버 시그널 폰트 및 모눈 그리드 보존.
-- [ ] `IdeConnectHub.jsx` 신규 작성: VS Code, Cursor, Antigravity, Colab 맞춤 1줄 복사 UI.
-- [ ] 레시피 코드 생성 및 세션 상태 동기화 모달 구현.
+- [x] `IdeView.jsx` 파일 및 관련 라우팅 전면 제거.
+- [x] `apps/web/DESIGN.md` 준수 검증: 골드/코발트/민트/엠버 시그널 폰트 및 모눈 그리드 보존.
+- [x] `IdeConnectHub.jsx` 신규 작성: VS Code, Cursor, Antigravity, Colab 맞춤 1줄 복사 UI.
+- [x] 레시피 코드 생성 및 세션 상태 동기화 모달 구현.
 
 #### Phase 3: 3D 시각화 & 포트폴리오
 - [ ] `Network3D.jsx`: 수신된 통계 데이터 기반 Three.js 3D 텐서 메시 인터랙션 완성.
