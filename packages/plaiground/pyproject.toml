@@ -1,0 +1,27 @@
+[project]
+name = "plaiground"
+version = "0.2.0"
+description = "plAI-ground BYOC 옴니채널 코어 엔진 (GPU 자동 감지, uv venv 빌더, 텔레메트리 연동)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "plAI-ground Team" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "click>=8.0.0",
+]
+
+[project.scripts]
+plaiground = "plaiground.cli:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
