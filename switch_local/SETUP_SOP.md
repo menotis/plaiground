@@ -30,11 +30,21 @@
 1. **`linter`**: PyPI에 없던 패키지(`mcp-server-ruff`) 에러 해결 ➔ 검증된 GitHub 소스에서 직접 빌드/실행하도록 수정 (`--from git+https://github.com/drewsonne/ruff-mcp-server`).
 2. **`supabase`**: 대괄호 템플릿(`[YOUR-PASSWORD]`)으로 인한 Invalid URL 에러 해결 ➔ Supabase 공식 원격 SSE 엔드포인트(`serverUrl`)로 교체하여 비밀번호 입력 없이 동작하도록 개선.
 3. **`fetch`**: 웹 리소스 조회를 위한 `mcp-server-fetch` 유지.
+4. **`sequential-thinking`**: 복잡한 다단계 추론을 위한 공식 MCP 서버 유지.
+
+> 💡 **Windows 사전 준비**: `uvx` 명령어가 없을 경우 먼저 `pip install uv`를 실행하면 즉시 사용 가능합니다.
 
 ### 3) 새 컴퓨터에 그대로 붙여넣을 완성형 JSON 전문
 ```json
 {
     "mcpServers": {
+        "sequential-thinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ]
+        },
         "linter": {
             "command": "uvx",
             "args": [
