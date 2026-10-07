@@ -107,24 +107,29 @@
    * 헤드라인·수치: `Schibsted Grotesk` (bold 700, tight tracking `-0.03em`).
    * 한글 산문: `Noto Sans KR` (leading-relaxed, `@layer base` 내 `word-break: keep-all`).
    * 기계 출력: `JetBrains Mono` (로그, 해시, ID, 명령어, 상태 칩). 절대 다른 폰트를 섞지 않는다.
-2. **The No-Border-Bloat Rule (컴포넌트 테두리 남발 금지)**:
-   * **AI스러운 박스 테두리 남발 절대 금지**: 모든 자식 컴포넌트마다 1px 선을 겹겹이 두르는 전형적인 AI 생성 UI 형태를 거부한다.
-   * 구획은 테두리가 아니라 여백(Gutter), 배경 깊이차(`void` vs `pit`), 또는 은은한 단일 글래스 면으로 정리한다.
-3. **The Proportional Balance Rule (세로 신장 금지 / 안정적 수평 비율)**:
+2. **The No-Border-Bloat Rule (컴포넌트 내부 테두리 남발 절대 금지)**:
+   * **자식 요소 테두리 중첩 원천 차단**: 큰 메인 컨테이너 내부에 들어가는 버튼, 탭, 카드, 설명 패널마다 1px 테두리를 겹겹이 두르는 전형적인 AI 생성 UI 형태를 절대 금지한다.
+   * **기본 무테두리(Borderless) 원칙**: 구획은 테두리가 아니라 여백(Gutter), 배경 톤 차이(`void` vs `pit` vs `bg-white/[0.02]`)로만 정돈한다.
+   * **인터랙션 종속 보더**: 테두리는 기본적으로 없애거나 극도로 투명하게 처리하고, **오직 마우스 호버(Hover) 시 또는 클릭/선택(Active) 시에만** 미세하게 테두리가 나타나도록 제어한다.
+3. **The No-Clipart-No-Emoji Rule (장식용 이모지 및 텍스트 옆 아이콘 절대 금지)**:
+   * **AI 슬롭 이모지 전면 퇴출**: 제목, 팁, 가이드 문장 앞에 습관적으로 붙이는 이모지(`💡`, `✨`, `⚡`, `🚀`, `🔥` 등) 및 제네릭 아이콘을 일체 금지한다.
+   * **텍스트 순수성 유지**: 타이포그래피의 위계(폰트 크기, 굵기, 여백, 자간)만으로 정보를 전달하며, 텍스트 옆에 무의미한 클립아트식 아이콘을 나열하지 않는다.
+   * **정밀 브랜드 에셋 한정**: VS Code, Cursor, Antigravity, Codex 등의 식별자는 제네릭 루시드 아이콘이 아닌 사용자가 직접 제공하는 공식 정밀 에셋 이미지만을 사용한다.
+4. **The Proportional Balance Rule (세로 신장 금지 / 안정적 수평 비율)**:
    * **세로로 길쭉하게 늘어지는 AI 카드 비율 전면 배제**: 카드와 패널이 불필요하게 세로로 길어지지 않도록 정보 밀도를 수평으로 배치한다.
    * 기존 plAI-ground 웹페이지가 지닌 12컬럼 비대칭 분할(7:5 또는 6:6), 컴팩트한 스탯 카드 등 조화로운 종횡비와 여백 리듬을 엄격히 계승한다.
-4. **The One Ember Rule (채도 절제)**:
+5. **The One Ember Rule (채도 절제)**:
    * 컬러 배경 섹션, 보라-청록 그라디언트, 무의미한 일러스트는 절대 금지.
    * 색상은 상태(진행/성공/에러/증명)를 알릴 때만 점 또는 선으로 등장한다.
-5. **The Two Stages Rule (CTA 무대 분리)**:
+6. **The Two Stages Rule (CTA 무대 분리)**:
    * 랜딩 페이지의 주 행동은 **골드 pill** (`bg-gold text-void`).
    * 콘솔/앱 대시보드의 주 행동은 **뼈백색 ink pill** (`bg-ink text-void`, hover 순백).
-6. **The Calm Console Rule (정적인 신뢰감)**:
+7. **The Calm Console Rule (정적인 신뢰감)**:
    * 대시보드 내 무한 회전 애니메이션, 둥둥 떠다니는 장식 카드 전면 금지.
    * 모션은 진입 시 `animate-rise` 스태거 1회, 라이브 상태 표시 도트의 미세한 `pulse`로 제한.
-7. **The Glow-Not-Shadow Rule (재질 기반 깊이)**:
+8. **The Glow-Not-Shadow Rule (재질 기반 깊이)**:
    * 어색한 오프셋 드롭 섀도우 금지. 14px 블러 유리 질감과 미세한 1px 테두리, 그리고 빛의 발광(Glow)으로만 위계를 만든다.
-8. **Honesty in Mockups (정직성 배지)**:
+9. **Honesty in Mockups (정직성 배지)**:
    * 시뮬레이션이나 예시 데이터가 포함된 UI는 반드시 제목 옆에 JetBrains Mono 대문자 배지(`SIMULATION`, `SAMPLE DATA`, `(예시)`)를 표기한다.
 
 ### 4.3 Impeccable 스킬 기반 기획-검증-제작 파이프라인
