@@ -15,7 +15,7 @@ import IdeConnectHub from './IdeConnectHub.jsx';
 // ─── Start AI — 옴니채널 BYOC 파이프라인 위저드 ──────────────────────────────
 // Step 1: 로컬 하드웨어(GPU/CUDA) 진단
 // Step 2: 과제에 맞는 AI 모델 선택
-// Step 3: IDE Connect Hub (VS Code, Cursor, Antigravity, Colab 1줄 복사)
+// Step 3: IDE Connect Hub (CLI, Skills, MCP, Google Colab 연동)
 
 const STEPS = ['하드웨어 진단', '모델 선택', 'IDE Connect Hub'];
 

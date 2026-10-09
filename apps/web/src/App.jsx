@@ -510,7 +510,7 @@ export default function App() {
           <ConsoleShell view={effectiveView} go={go} profile={profile} onLogin={login} onLogout={logout}>
             {effectiveView === 'start' && <StartAI go={go} onSession={setSession} addToast={addToast} />}
             {effectiveView === 'community' && <Community go={go} postId={viewParam} onStaged={setStaged} addToast={addToast} />}
-            {effectiveView === 'view' && <ViewAI addToast={addToast} />}
+            {effectiveView === 'view' && <ViewAI go={go} addToast={addToast} />}
             {effectiveView === 'portfolio' && <PortfolioView addToast={addToast} />}
             {effectiveView === 'lms' && <Lms go={go} addToast={addToast} />}
           </ConsoleShell>

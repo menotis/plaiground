@@ -200,8 +200,9 @@ const Seg = ({ value, options, onChange }) => (
   </div>
 );
 
-export default function ViewAI({ addToast }) {
+export default function ViewAI({ go, addToast }) {
   const [runs, setRuns] = useState(null);
+  const [apiError, setApiError] = useState(false);
   const [runId, setRunId] = useState('');
   const [schema, setSchema] = useState(null);
   const [rows, setRows] = useState([]);
@@ -218,7 +219,17 @@ export default function ViewAI({ addToast }) {
   const fsRef = useRef(null);
 
   useEffect(() => {
-    api('/api/viz/runs').then((r) => r.json()).then((list) => { setRuns(list); if (list[0]) setRunId(list[0].run_id); }).catch(() => setRuns([]));
+    api('/api/viz/runs')
+      .then((r) => r.json())
+      .then((list) => {
+        setRuns(list);
+        setApiError(false);
+        if (list[0]) setRunId(list[0].run_id);
+      })
+      .catch(() => {
+        setRuns([]);
+        setApiError(true);
+      });
     const onFs = () => setFs(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onFs);
     return () => document.removeEventListener('fullscreenchange', onFs);
@@ -328,12 +339,26 @@ export default function ViewAI({ addToast }) {
       </div>
 
       {runs && !runs.length && (
-        <div className="mt-12">
-          <p className="text-xl font-medium">아직 기록된 학습이 없습니다.</p>
-          <p className="mt-3 text-[16px] text-mist leading-relaxed">
-            Start AI에서 <span className="text-ink">mnist-cnn-lite</span>를 세팅하고 로컬 IDE 또는 Colab에서 학습을 실행하면
-            <code className="font-mono text-[15px] text-ink"> var/telemetry/viz/&lt;run_id&gt;/</code>에 스텝별 가중치가 저장되고 여기서 재생됩니다.
+        <div className="mt-12 p-8 rounded-xl border border-line bg-pit/50 max-w-2xl space-y-4">
+          <p className="text-xl font-medium text-ink">아직 기록된 학습 데이터가 없습니다.</p>
+          <p className="text-[15px] text-mist leading-relaxed">
+            <span className="text-ink font-semibold">Start AI</span>에서 모델을 선택하고 로컬 IDE(VS Code, Cursor) 또는 Colab에서 학습을 시작하면, 
+            실시간 텐서 가중치와 그래디언트 변화가 자동으로 동기화되어 여기서 인터랙티브하게 시각화됩니다.
           </p>
+          {apiError ? (
+            <p className="font-mono text-[13px] text-ember/90 pt-1">
+              ⚠️ 백엔드 API 서버가 실행되지 않았습니다. 터미널에서 <code className="text-ink">python -m plaiground_host.server</code>를 실행해 주세요.
+            </p>
+          ) : (
+            <div className="pt-2">
+              <button
+                onClick={() => go?.('start')}
+                className="px-6 py-2.5 rounded-full bg-gold text-void text-[14px] font-semibold hover:brightness-110 transition-all inline-flex items-center gap-2"
+              >
+                Start AI에서 첫 모델 실행하기 →
+              </button>
+            </div>
+          )}
         </div>
       )}
 
